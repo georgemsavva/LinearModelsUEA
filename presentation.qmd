@@ -1,0 +1,463 @@
+---
+title: "Linear Models"
+subtitle: "(The new statistics)"
+author: "George Savva (Quadram Institute Bioscience)"
+format:
+  revealjs:
+    theme: [dark, custom.scss]
+    slide-number: true
+    scrollable: true
+    incremental: true 
+---
+
+# Introduction
+
+## Session outline
+
+-   Doing statistics the new way
+-   Understanding linear models
+-   Rethinking statistics in terms of LMs
+-   Examples, discussion and practical work with R
+
+## Learning objectives
+
+-   Goals of statistics
+-   Distributions and Modelling
+    -   Estimating parameters
+    -   Re-framing hypothesis tests as linear models
+    -   Regression models for continuous and discrete predictors
+    -   Interpreting and diagnosing models
+
+------------------------------------------------------------------------
+
+-   Extensions and generalisations:
+    -   Interactions (More complex hypotheses)
+    -   Log-transformations
+    -   Logistic regression for binary data
+    -   Negative binomial regression for count data
+
+## Aim
+
+-   Start to understand the 'modelling' approach to statistics
+
+-   Enable you to explore this extensive framework to do almost any kind of statistical / ML analysis
+
+-   Become a statistician?
+
+## About me
+
+-   UEA lecturer in applied statistics (2013-2017)
+
+-   Statistician at Quadram Institute Bioscience (2017-present)
+
+-   Support for epidemiology / genomics / ecology / clinical trials / pre-clinical research
+
+## About you!
+
+# Models and distributions
+
+## Motivating problem
+
+-   Suppose we are interested in understanding the typical heights of UEA students?
+
+-   How should we go about this?
+
+-   Frame a question in mathematical / statistical terms.
+
+    -   What should the answer look like?
+    -   How will we know we are done?
+
+## A distribution and a model
+
+-   Students heights are not all the same, they have a 'distribution'.
+
+-   There is an average (central tendency) and a variance (spread).
+
+-   We also have to assume or determine the shape of the distribution.
+
+-   Typically assume continuous variables are independently normally distributed
+
+## Writing this model mathematically
+
+$$\text{Height} \sim N(\text{mean} , \text{variance})$$
+
+. . .
+
+$$H \sim N(\mu , \sigma^2)$$
+
+. . .
+
+We describe how individual heights arise like this:
+
+$$h_i = \mu + \epsilon_i\quad\text{where}\quad\epsilon_i \sim N(0,\sigma^2)$$
+
+. . .
+
+The model has a structural part and an error part
+
+This is the simplest linear model.
+
+## Model
+
+::: columns
+::: {.column width="60%"}
+-   So, for example:
+
+    "Heights are normally distributed with mean 180cm and standard deviation 10cm"
+
+-   We can represent this visually
+
+-   Is it good enough to describe the distribution of student heights?
+:::
+
+::: {.column width="40%"}
+```{r}
+#| fig-height: 10
+plot.function(\(x) dnorm(x,180,10), xlim = c(120,240))
+```
+:::
+:::
+
+## So what is a model?
+
+Here's our model for heights:
+
+$$
+\boxed{h_i = \mu + \epsilon_i\quad\text{where}\quad\epsilon_i ~ N(0,\sigma^2)}
+$$
+
+-   A mathematical or statistical way of writing down how we think our outcome is distributed
+
+-   The model needs to be good enough for the purpose!
+
+    -   *"All models are wrong, but some are useful"*
+
+-   It needs to include the aspects of the process we are interested in.
+
+    -   Here it's just a mean and variance but we can add things to this equation if we think they affect height.
+
+# 'Doing' statistics
+
+## Doing statistics with the model
+
+-   Key insight!
+
+-   Once we have a model, *all* of statistical analysis is just estimating model parameters!
+
+-   (What are the parameters here?)
+
+$$h_i = \mu + \epsilon_i\quad\text{where}\quad\epsilon_i \sim N(0,\sigma^2)$$
+
+## Estimating the model
+
+We can use data to estimate the parameters
+
+If we get enough $h_i$'s (at least 2!) we can estimate the values of $\mu$ and $\sigma$.
+
+Several ways these models are estimated:
+
+-   Numerical optimisation
+-   Solving with algebra
+-   Maximum likelihood
+-   Bayesian resampling
+
+(Not getting into this..the computer will do it)
+
+## Estimating the model using R
+
+Enter some data and check it's OK:
+
+```{r echo=TRUE}
+height = c(173,177,160,165,172,182,157,175,167)
+dat <- data.frame(height)
+head(dat)
+```
+
+Estimate the model:
+
+```{r echo=TRUE}
+model1 <- lm( height ~ 1 , data=dat)
+```
+
+Display the model summary:
+
+```{r echo=TRUE, eval=TRUE}
+summary(model1)
+```
+
+## Uncertainty
+
+Is our parameter estimate perfect? Have we completely discovered the average height of UEA students?
+
+The confidence interval and standard error reflect the uncertainty in the estimate.
+
+There is also uncertainty in the standard deviation estimate, but this is harder to calculate using R and we don't often use it.
+
+## Thinking about uncertainty
+
+What can we really say about the mean and spread of student heights?
+
+```{r }
+library(car)
+linearHypothesis(model1, "(Intercept)=170")
+linearHypothesis(model1, "(Intercept)=160")
+linearHypothesis(model1, "(Intercept)=163.5")
+
+confint(model1)
+
+```
+
+## Diagnostics
+
+How good is our model? What were the model assumptions?
+
+-   Heights are normally distributed
+-   Individuals heights are independent of each other
+-   (You are a representative sample of students)
+
+Can we check these?
+
+## Process
+
+So we have a process for any statistical analysis!
+
+```{mermaid}
+flowchart LR
+  A[Write down a model how data are linked to parameters] --> B[Estimate the parameters]
+  B --> C[Does model fit data?]
+  C --> D[Interpret]
+  C --> A
+```
+
+## Exercise
+
+A student questionnaire was conducted at Adelaide University.  We'll use this dataset to answer some interesting questions.
+
+2. Consider a linear model for student height
+
+3. Load data into R. 
+    + Calculate some descriptive statistics
+    + Make some plots
+
+4. Estimate a model in R to find the distribution of student heights.
+
+5. Diagnose the model
+
+6. Check whether just using R to calculate the mean and standard deviation of student heights gives you the same answer.
+
+# Extending our linear model
+
+## Adding a predictor (finally!)
+
+* Let's improve our model.
+
+* Why might we want a model?
+
+    * We might have a specific hypothesis to test
+
+    * Or we might want to predict an outcome for a new individual
+
+    * Or just understand the factors that contribute to our outcome in a population
+
+* Can we improve our height prediction?  
+
+* Can we add a factor to our model that helps to explain height?
+
+
+##
+Height varies with a normal distribution, but with a different average for men and women.
+
+. . . 
+
+We might write this as:
+
+$$
+h_i=\left\{\begin{array}{ll}
+\mu_\text{male} + \epsilon_i & \text{(if male)}\\
+\mu_\text{female} + \epsilon_i & \text{(if female)}
+\end{array}\right.\quad\text{where}\quad\epsilon_i \sim N(0,\sigma^2)
+$$
+
+. . . 
+
+But we would usually write this as:
+
+$$
+\boxed{h_i = \mu + \beta x_i+\epsilon_i \quad\text{where}\quad \left\{\begin{array}{ll}
+x_i=1 &\text{if male;}\\
+x_i=0 & \text{if female}
+\end{array}\right.}
+$$
+
+. . .
+
+Can you interpret this model?  What are the mean heights for men and women under this model? What does $\beta$ represent?
+
+## Estimating our new model using R
+
+Using the Adelaide survey data:
+
+```{r }
+library(readxl)
+dat <- read_excel("survey.xlsx", na="NA")
+dat <- dat[!is.na(dat$Sex), ]
+table(dat$Sex)
+dat
+```
+
+Make some plots:
+```{r }
+library(ggplot2)
+ggplot(dat , aes(x=Sex, y=Height)) + geom_boxplot() + geom_point() + theme_bw()
+```
+
+--- 
+
+```{r }
+model2 <- lm( Height ~ Sex , data=dat)
+summary(model2)
+```
+```
+plot(model2)
+```
+
+## Diagnostic plots
+
+```{r }
+par(mfrow=c(2,2))
+plot(model2)
+```
+
+## Interpretation
+
+Look at:
+
+* Coefficients
+* Confidence intervals
+* Statistical significance
+* Marginal means
+* Variance explained compared to a null model
+* ANOVA
+
+* Anything else?
+
+## A continuous predictor
+
+Let's repeat this process to understand how hand span depends on height.
+
+```{r }
+ggplot(data=dat, aes(Height, Wr.Hnd, shape=Sex)) + geom_point() 
+```
+
+Can you write down a model for how hand span depends on height?
+
+```{r }
+model3 <- lm(data=dat, Wr.Hnd ~ Height)
+summary(model3)
+```
+
+## Multiple predictors
+
+Can we better explain the hand width model?
+
+```{r }
+model4 <- lm(data=dat, Wr.Hnd ~ Height + Sex)
+summary(model4)
+```
+
+Compare the two models.  What do they tell you?  Which is better?
+
+```{r }
+library(modelsummary)
+modelsummary(list(model3, model4))
+```
+## Predictions
+
+```{r }
+library(patchwork)
+dat$predict3 <- predict(model3, newdata = dat)
+dat$predict4 <- predict(model4, newdata = dat)
+
+(ggplot(data=dat, aes(Height, Wr.Hnd)) + geom_point() + geom_line(aes(y=predict3), lwd=1))+
+(ggplot(data=dat, aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=predict4), lwd=1) +scale_color_manual(values=c("black", "red")))
+
+```
+
+
+## Interactions
+
+Finally, we might ask if there's any evidence that the slope is different between men and women.
+
+How could we make a model to test this hypothesis?
+
+```{r }
+model5 <- lm(data=dat, Wr.Hnd ~ Height * Sex)
+summary(model5)
+dat$predict5 <- predict(model5, newdata = dat)
+(ggplot(data=dat, aes(Height, Wr.Hnd)) + geom_point() + geom_line(aes(y=predict3), lwd=1))+
+(ggplot(data=dat, aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=predict4), lwd=1) +scale_color_manual(values=c("black", "red"))) + 
+(ggplot(data=dat, aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=predict5), lwd=1) +scale_color_manual(values=c("black", "red"))) + plot_layout(guides="collect")
+
+
+```
+
+## Model comparison
+
+```{r }
+anova(model3, model4, model5)
+```
+
+## Everything is a linear model
+
+What statistical tests/procedures have we replaced with a linear model?
+
+* Unpaired T-test
+* Correlation
+* ANOVA
+* ANCOVA
+
+All other statistical tests can be reframed in this way:
+
+* Models for count or categorical outcomes
+* Non-parametric tests
+* Machine learning
+
+# Further extensions
+
+## Dealing with non-normal data
+
+* So far we’ve seen data that can be modelled using normal distributions.
+
+* Biological data very often does not act like this
+
+* What options do we have?
+
+## Logarithmic transformations
+
+* Instead of modelling on y, we can model log(y).
+
+* This is a very commonly used approach and it is surprising how often and how well it works.
+
+$$\log(y_i) = a + bx_i + \epsilon_i$$
+
+* Implies
+
+$$y_i = \exp(a + bx + e) = e^a\times e^{bx_i}\times e^{\epsilon_i}$$
+
+or 
+
+$$y_i = \alpha\times \beta^{x_i}\times e^{\epsilon_i}$$
+
+* So instead of an additive model, we have a multiplicative one.
+
+* But we estimate it as a regular linear model, using $\log(y)$ as the outcome.
+
+## Logistic regression for binary outcomes
+
+## Exercises
+
+
+## References
+
+
+
