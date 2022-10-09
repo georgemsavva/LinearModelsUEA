@@ -4,7 +4,7 @@ author: "George Savva (Quadram Institute Bioscience)"
 echo: true
 format:
   revealjs:
-    theme: [dark, custom.scss]
+    theme: [dark]
     slide-number: true
     scrollable: true
     transition: slide
@@ -17,21 +17,178 @@ format:
 
 ## Session outline
 
--   Doing statistics the new way
 -   Understanding linear models
 -   Rethinking statistics in terms of LMs
 -   Examples, discussion and practical work with R
 
+## Getting our R packages
+
+Start RStudio..
+
+Make sure you have these packages installed..
+
+```{r getsetup, warning=FALSE}
+library(UsingR) # dataset
+library(equatiomatic) # making equations from models
+library(emmeans) # marginal means
+library(broom) # enhancements to model
+library(performance) # model diagnostics
+library(ggplot2) # making graphs
+library(gamlss) # enhanced modelling
+```
+
+## Files for the session:
 
 ## What is a linear model?
 
 ```{r echo=FALSE}
-library(ggplot2)
-dat <- data.frame(x=1:10, y=rnorm(10,1:10,1))
-ggplot(dat , aes(x,y))  + geom_point() + stat_smooth(method="lm") + theme_bw(base_size = 18)
+
+data("kid.weights") 
+ggplot(kid.weights , aes(x=age,y=height))  + geom_point() + 
+  theme_bw(base_size = 18)+ 
+  labs(x="Age (years)",y="Height (ins)")
 ```
 
-$$y=a+bx$$
+$$\text{Height}=a+b\times \text{Age}$$
+
+## What is a linear model?
+
+```{r echo=FALSE}
+
+data("kid.weights") 
+ggplot(kid.weights , aes(x=age,y=height))  + geom_point() + 
+  theme_bw(base_size = 18)+ 
+  stat_smooth(method="lm", geom="line")+
+  labs(x="Age (years)",y="Height (ins)")
+```
+
+$$\text{Height}=a+b\times \text{Age}$$
+
+## What is a linear model
+
+* Describes the relationship between an outcome and its predictors.
+
+* What is the model for?
+
+## Fitting our model in R
+
+```{r }
+
+model1 <- lm( height ~ age , data = kid.weights )
+
+summary(model1)
+
+extract_eq(model1)
+
+eqOutput(model1)
+
+```
+
+
+## What can we do with this?
+
+* Describe the relationship?
+
+* Predict new values of height from age?
+
+
+```{r  }
+
+newages = data.frame(age=12*(1:20))
+
+model1 |> predict (  newdata = newages )
+```
+
+## Prediction intervals
+
+```{r addingpredictions}
+model1 |> augment(interval="prediction") |>
+  ggplot(aes(x=age,y=height))   + 
+  theme_bw(base_size = 18)+ 
+  geom_ribbon( aes(y=.fitted, ymin=.lower, ymax=.upper), alpha=0.2,fill="blue") + 
+  geom_line( aes(y=.fitted)) + 
+  geom_point() +
+  labs(x="Age (months)",y="Height (ins)")
+
+```
+
+## Confidence intervals
+
+```{r addingconfidence}
+model1 |> augment(interval="prediction") |>
+  ggplot(aes(x=age,y=height))   + 
+  theme_bw(base_size = 18)+ 
+  geom_ribbon( aes(y=.fitted, ymin=.lower, ymax=.upper), alpha=0.2,fill="blue") + 
+  geom_line( aes(y=.fitted)) + 
+  geom_point() +
+  labs(x="Age (months)",y="Height (ins)")
+
+```
+## Our model is done:
+
+```{r }
+eqOutput(model1)
+```
+
+
+## Example 2
+
+```{r }
+
+model2 <- lm( weight ~ age , data = kid.weights )
+
+
+model2 |> augment(interval="prediction") |>
+  ggplot(aes(x=age,y=weight))   + 
+  theme_bw(base_size = 18)+ 
+  geom_ribbon( aes(y=.fitted, ymin=.lower, ymax=.upper), alpha=0.2,fill="blue") + 
+  geom_line( aes(y=.fitted)) + 
+  geom_point() +
+  labs(x="Age (months)",y="Weight (lbs)")
+
+
+summary(model1)
+
+extract_eq(model1)
+
+eqOutput(model1)
+
+
+```
+
+
+## Enhancing our model
+
+```{r }
+
+model2b <- gamlss( weight ~ age , 
+                   sigma.formula = ~age ,
+                  # nu.formula = ~age ,
+                   data = kid.weights , family="BCPE")
+
+centiles.fan(model2b, cent=c(2.5,97.5))
+points(kid.weights$age , kid.weights$weight)
+summary(model2b)
+
+
+```
+
+
+
+## Enhancing our model 2
+
+```{r }
+
+model2c <- gamlss( weight ~ age , 
+                   sigma.formula = ~age ,
+                   nu.formula = ~age ,
+                   data = kid.weights , family="BCPE")
+
+centiles.fan(model2c, cent=c(2.5,97.5))
+points(kid.weights$age , kid.weights$weight)
+summary(model2b)
+
+```
 
 
 ## Learning objectives
@@ -56,19 +213,22 @@ $$y=a+bx$$
 
 -   Become a statistician?
 
-## About me
+## QIB Experience
 
--   UEA lecturer in applied statistics (2013-2017)
+- Statistician at Quadram Institute Bioscience (2017-present)
 
--   Statistician at Quadram Institute Bioscience (2017-present)
+- Support for epidemiology / genomics / ecology / clinical trials / pre-clinical research
 
--   Support for epidemiology / genomics / ecology / clinical trials / pre-clinical research
+
+- Some statistical thinking goes a long way
+- Many problems would be much simpler if they were re-framed in terms of linear models.
+- Other approaches make life difficult and lead to inefficiencies and mistakes
 
 ## About you!
 
 # Models and distributions
 
-## Motivating problem
+## A simple motivating problem
 
 -   Suppose we are interested in understanding the typical heights of UEA students?
 
@@ -81,9 +241,9 @@ $$y=a+bx$$
 
 . . .
 
-
-:::{.callout-tip}
+::: callout-tip
 ## Setting the question
+
 How should you set about the scope of a statistical problem?
 :::
 
@@ -99,27 +259,20 @@ How should you set about the scope of a statistical problem?
 
 -   Often assume continuous variables are **independently normally distributed**
 
-
-
 ## Model
 
 ::: columns
 ::: {.column width="50%"}
-- So, for example:
+-   So, for example:
 
     "Heights are normally distributed with mean 180cm and standard deviation 10cm"
 
-- We can represent this visually
+-   We can represent this visually
 
-- Is it likely to be good enough to describe the distribution of student heights?
-
-
-
+-   Is it likely to be good enough to describe the distribution of student heights?
 :::
 
 ::: {.column width="10%"}
-
-
 :::
 
 ::: {.column width="40%"}
@@ -134,11 +287,11 @@ plot.function(\(x) dnorm(x,180,10), xlim = c(120,240), xlab="Height", ylab="Dens
 
 . . .
 
-:::{.callout-tip}
+::: callout-tip
 ## Models
+
 What is a model?
 :::
-
 
 ## Writing this model mathematically
 
@@ -156,11 +309,9 @@ $$h_i = \mu + \epsilon_i\quad\text{where}\quad\epsilon_i \sim N(0,\sigma^2)$$
 
 . . .
 
-The model has a <span style="color: green;">structural</span> part and an <span style="color: red;">error</span> part
+The model has a [structural]{style="color: green;"} part and an [error]{style="color: red;"} part
 
 This is the simplest linear model.
-
-
 
 ## So what is a model?
 
@@ -174,7 +325,7 @@ $$
 
 -   The model needs to be good enough for the purpose!
 
-    -   <span style="color: yellow;>***"All models are wrong, but some are useful"***</span>
+    -   ***All models are wrong, but some are useful***
 
 -   It needs to link the aspects of the process we are interested in (mean $\mu$ and variance $\sigma^2$) to the data that we can observe ($h_i$).
 
@@ -182,53 +333,53 @@ $$
 
 ## Do I *need* a model to do analysis?
 
-* Yes!  Whenever you're doing any kind of statistics there is an underlying model.
+-   Yes! Whenever you're doing any kind of statistics there is an underlying model.
 
-* An implicit understanding of how your data came to be
-    * **how the data is generated** and 
-    * **how it was collected.**
+-   An implicit understanding of how your data came to be
 
-* *Ad hoc* statistical procedures sometimes obscure hide these assumptions
+    -   **how the data is generated** and
+    -   **how it was collected.**
 
-* But with linear modelling they are more explicit.
+-   *Ad hoc* statistical procedures sometimes obscure hide these assumptions
+
+-   But with linear modelling they are more explicit.
 
 # 'Doing' statistics
 
 ## Doing statistics with the model
 
-
-* Our model: 
+-   Our model:
 
 . . .
 
 $$h_i = \mu + \epsilon_i\quad\text{where}\quad\epsilon_i \sim N(0,\sigma^2)$$
 
-* If we estimate $\mu$ and $\epsilon$, we have describes the height distribution and we are done!
+-   If we estimate $\mu$ and $\epsilon$, we have describes the height distribution and we are done!
 
 . . .
 
-:::{.callout-note}
-##  Key insight!
+::: callout-note
+## Key insight!
 
 Once we have a model, *all* of statistical analysis is just estimating model parameters!
 :::
 
 ## Estimating the model
 
-* We can use data to estimate the parameters
+-   We can use data to estimate the parameters
 
-* If we get enough $h_i$'s (at least 2!) we can estimate the values of $\mu$ and $\sigma$.
+-   If we get enough $h_i$'s (at least 2!) we can estimate the values of $\mu$ and $\sigma$.
 
-* Several ways these models are estimated:
+-   Several ways these models are estimated:
 
     -   Numerical optimisation
     -   Solving with algebra
     -   Maximum likelihood
     -   Bayesian resampling
 
-* (Not getting into this..the computer will do it)
+-   (Not getting into this..the computer will do it)
 
-:::{.callout-note}
+::: callout-note
 We can use this logic to show that the sample mean is the best estimate for the $\mu$
 :::
 
@@ -306,43 +457,44 @@ flowchart LR
 
 ## Exercise
 
-A student questionnaire was conducted at Adelaide University.  We'll use this dataset to answer some interesting questions.
+A student questionnaire was conducted at Adelaide University. We'll use this dataset to answer some interesting questions.
 
-2. Consider a linear model for student height
+2.  Consider a linear model for student height
 
-3. Load data into R. 
-    + Calculate some descriptive statistics
-    + Make some plots
+3.  Load data into R.
 
-4. Estimate a model in R to find the distribution of student heights.
+    -   Calculate some descriptive statistics
+    -   Make some plots
 
-5. Diagnose the model
+4.  Estimate a model in R to find the distribution of student heights.
 
-6. Check whether just using R to calculate the mean and standard deviation of student heights gives you the same answer.
+5.  Diagnose the model
+
+6.  Check whether just using R to calculate the mean and standard deviation of student heights gives you the same answer.
 
 # Extending our linear model
 
 ## Adding a predictor (finally!)
 
-* Let's improve our model.
+-   Let's improve our model.
 
-* Why might we want a model?
+-   Why might we want a model?
 
-    * We might have a specific hypothesis to test
+    -   We might have a specific hypothesis to test
 
-    * Or we might want to predict an outcome for a new individual
+    -   Or we might want to predict an outcome for a new individual
 
-    * Or just understand the factors that contribute to our outcome in a population
+    -   Or just understand the factors that contribute to our outcome in a population
 
-* Can we improve our height prediction?  
+-   Can we improve our height prediction?
 
-* Can we add a factor to our model that helps to explain height?
+-   Can we add a factor to our model that helps to explain height?
 
+## 
 
-##
 Height varies with a normal distribution, but with a different average for men and women.
 
-. . . 
+. . .
 
 We might write this as:
 
@@ -353,7 +505,7 @@ h_i=\left\{\begin{array}{ll}
 \end{array}\right.\quad\text{where}\quad\epsilon_i \sim N(0,\sigma^2)
 $$
 
-. . . 
+. . .
 
 But we would usually write this as:
 
@@ -366,7 +518,7 @@ $$
 
 . . .
 
-Can you interpret this model?  What are the mean heights for men and women under this model? What does $\beta$ represent?
+Can you interpret this model? What are the mean heights for men and women under this model? What does $\beta$ represent?
 
 ## Estimating our new model using R
 
@@ -381,20 +533,20 @@ dat
 ```
 
 Make some plots:
+
 ```{r }
 library(ggplot2)
 ggplot(dat , aes(x=Sex, y=Height)) + geom_boxplot() + geom_point() + theme_bw()
 ```
 
---- 
+------------------------------------------------------------------------
 
 ```{r }
 model2 <- lm( Height ~ Sex , data=dat)
 summary(model2)
 ```
-```
-plot(model2)
-```
+
+    plot(model2)
 
 ## Diagnostic plots
 
@@ -407,7 +559,7 @@ plot(model2)
 
 Look at:
 
-* Interpreting coefficients and confidence intervals
+-   Interpreting coefficients and confidence intervals
 
 ```{r }
 library(equatiomatic)
@@ -420,24 +572,23 @@ tidy(model2, conf.int=TRUE)
 extract_eq(model2, use_coefs = TRUE)
 ```
 
-* Statistical significance
+-   Statistical significance
 
 ```{r }
 coef(summary(model2))
 ```
 
-* Marginal means
+-   Marginal means
 
 ```{r }
 emmeans::emmeans(model2 , ~Sex)
 ```
 
-* Variance explained compared to a null model /  ANOVA
+-   Variance explained compared to a null model / ANOVA
 
 ```{r }
 
 ```
-
 
 ## A continuous predictor
 
@@ -466,9 +617,9 @@ extract_eq(model4)
 
 ```
 
---- 
+------------------------------------------------------------------------
 
-Compare the two models.  What do they tell you?  Which is better?
+Compare the two models. What do they tell you? Which is better?
 
 ```{r }
 library(modelsummary)
@@ -487,7 +638,6 @@ dat$predict4 <- predict(model4, newdata = dat)
 
 ```
 
-
 ## Interactions
 
 Finally, we might ask if there's any evidence that the slope is different between men and women.
@@ -499,7 +649,7 @@ model5 <- lm(data=dat, Wr.Hnd ~ Height * Sex)
 summary(model5)
 ```
 
---- 
+------------------------------------------------------------------------
 
 ```{r }
 dat$predict5 <- predict(model5, newdata = dat)
@@ -522,26 +672,25 @@ anova(model3, model4, model5)
 
 What statistical tests/procedures have we replaced with a linear model?
 
-* Unpaired T-test
-* Correlation
-* ANOVA
-* ANCOVA
+-   Unpaired T-test
+-   Correlation
+-   ANOVA
+-   ANCOVA
 
 All other statistical tests can be reframed in this way:
 
-* Models for count or categorical outcomes
-* Non-parametric tests
-* Non-linear models
-* More complex machine learning
-
+-   Models for count or categorical outcomes
+-   Non-parametric tests
+-   Non-linear models
+-   More complex machine learning
 
 ## Dealing with non-normal data
 
-* So far we’ve seen data that can be modelled using normal distributions.
+-   So far we've seen data that can be modelled using normal distributions.
 
-* Biological data very often does not act like this
+-   Biological data very often does not act like this
 
-* What options do we have?
+-   What options do we have?
 
 ## Animal traits
 
@@ -556,19 +705,18 @@ ggplot(animals, aes(body.mass,metabolic.rate,col=phylum)) + geom_point() + scale
 
 Instead of modelling on y, we can model log(y).
 
-* This is a very commonly used approach and it is surprising how often and how well it works.
+-   This is a very commonly used approach and it is surprising how often and how well it works.
 
 $$\log(y_i) = a + bx_i + \epsilon_i$$
 
-* Implies
+-   Implies
 
 $$y_i = \exp(a + bx + e) = e^a\times e^{bx_i}\times e^{\epsilon_i}$$
 
-or 
+or
 
 $$y_i = \alpha\times \beta^{x_i}\times e^{\epsilon_i}$$
 
-* So instead of an additive model, we have a multiplicative one.
+-   So instead of an additive model, we have a multiplicative one.
 
-* But we estimate it as a regular linear model, using $\log(y)$ as the outcome.
-
+-   But we estimate it as a regular linear model, using $\log(y)$ as the outcome.
