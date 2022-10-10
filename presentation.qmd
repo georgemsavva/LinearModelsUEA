@@ -35,6 +35,11 @@ library(broom) # enhancements to model
 library(performance) # model diagnostics
 library(ggplot2) # making graphs
 library(gamlss) # enhanced modelling
+library(car)    # hypothesis tests 
+library(ggbeeswarm) # beeswarm graphs
+
+# install.packages("UsingR", "equatiomatic", "emmeans", "broom", "performance", "ggplot2", "gamlss", "car")
+
 ```
 
 ## Files for the session:
@@ -49,7 +54,8 @@ ggplot(kid.weights , aes(x=age,y=height))  + geom_point() +
   labs(x="Age (years)",y="Height (ins)")
 ```
 
-$$\text{Height}=a+b\times \text{Age}$$
+What questions might we ask?
+What form could the answer take?
 
 ## What is a linear model?
 
@@ -73,15 +79,10 @@ $$\text{Height}=a+b\times \text{Age}$$
 ## Fitting our model in R
 
 ```{r }
-
 model1 <- lm( height ~ age , data = kid.weights )
-
-summary(model1)
-
 extract_eq(model1)
-
-eqOutput(model1)
-
+tidy(model1)
+extract_eq(model1, use_coefs=TRUE)
 ```
 
 
@@ -91,15 +92,16 @@ eqOutput(model1)
 
 * Predict new values of height from age?
 
+--- 
 
 ```{r  }
 
 newages = data.frame(age=12*(1:20))
 
-model1 |> predict (  newdata = newages )
+model1 |> predict (  newdata = newages ) |> cbind(newages)
 ```
 
-## Prediction intervals
+## Prediction intervals (variation between points)
 
 ```{r addingpredictions}
 model1 |> augment(interval="prediction") |>
@@ -112,98 +114,103 @@ model1 |> augment(interval="prediction") |>
 
 ```
 
-## Confidence intervals
+## Confidence intervals (uncertainty in the average)
 
 ```{r addingconfidence}
-model1 |> augment(interval="prediction") |>
+model1 |> augment(interval="confidence") |>
   ggplot(aes(x=age,y=height))   + 
   theme_bw(base_size = 18)+ 
   geom_ribbon( aes(y=.fitted, ymin=.lower, ymax=.upper), alpha=0.2,fill="blue") + 
-  geom_line( aes(y=.fitted)) + 
-  geom_point() +
+  geom_line( aes(y=.fitted)) + geom_point() +
   labs(x="Age (months)",y="Height (ins)")
 
 ```
 ## Our model is done:
 
 ```{r }
-eqOutput(model1)
+extract_eq(model1, use_coefs = TRUE)
 ```
+
+Standard error of variance = `r round(sigma(model1),2)`
 
 
 ## Example 2
 
+Weight by age.  Can we apply the same method?
+
+Can you forsee a problem?
+
 ```{r }
+ggplot(kid.weights, aes(x=age,y=weight))   + 
+  theme_bw(base_size = 18)+ 
+  geom_point() +
+  labs(x="Age (months)",y="Weight (lbs)")
+```
 
+## Example 2
+
+What are the limitations of the 'regular' linear model?
+
+```{r }
 model2 <- lm( weight ~ age , data = kid.weights )
-
-
 model2 |> augment(interval="prediction") |>
   ggplot(aes(x=age,y=weight))   + 
   theme_bw(base_size = 18)+ 
   geom_ribbon( aes(y=.fitted, ymin=.lower, ymax=.upper), alpha=0.2,fill="blue") + 
-  geom_line( aes(y=.fitted)) + 
-  geom_point() +
+  geom_line( aes(y=.fitted)) + geom_point() +
   labs(x="Age (months)",y="Weight (lbs)")
-
-
-summary(model1)
-
-extract_eq(model1)
-
-eqOutput(model1)
-
-
 ```
 
 
-## Enhancing our model
+## Enhancing our model 1
 
-```{r }
+We can model how the error term changes with age.
 
-model2b <- gamlss( weight ~ age , 
-                   sigma.formula = ~age ,
-                  # nu.formula = ~age ,
-                   data = kid.weights , family="BCPE")
-
+```{r message=FALSE}
+model2b <- gamlss( weight ~ age , sigma.formula = ~age ,
+                   data = kid.weights, control = gamlss.control(trace=F))
 centiles.fan(model2b, cent=c(2.5,97.5))
 points(kid.weights$age , kid.weights$weight)
-summary(model2b)
-
 
 ```
 
+## Enhancing out model 1
+
+```{r }
+summary(model2b)
+```
 
 
 ## Enhancing our model 2
 
+We can model how the skew changes with age.
+
 ```{r }
-
-model2c <- gamlss( weight ~ age , 
-                   sigma.formula = ~age ,
-                   nu.formula = ~age ,
-                   data = kid.weights , family="BCPE")
-
+model2c <- gamlss( weight ~ age , sigma.formula = ~age , nu.formula = ~age ,
+            data = kid.weights , family="BCPE", control = gamlss.control(trace=F))
 centiles.fan(model2c, cent=c(2.5,97.5))
 points(kid.weights$age , kid.weights$weight)
-summary(model2b)
+```
 
+## Enhancing our model 2
+
+```{r }
+summary(model2c)
 ```
 
 
 ## Learning objectives
 
--   Goals of statistics
 -   Distributions and Modelling
     -   Estimating parameters
     -   Re-framing hypothesis tests as linear models
-    -   Regression models for continuous and discrete predictors
+    -   Continuous and discrete predictors
     -   Interpreting and diagnosing models
+
 -   Extensions and generalisations:
-    -   Interactions (More complex hypotheses)
+    -   Multiple predictors / interactions (More complex hypotheses)
     -   Log-transformations
     -   Logistic regression for binary data
-    -   Negative binomial regression for count data
 
 ## Aim
 
@@ -213,18 +220,18 @@ summary(model2b)
 
 -   Become a statistician?
 
-## QIB Experience
+## About me!
 
 - Statistician at Quadram Institute Bioscience (2017-present)
 
 - Support for epidemiology / genomics / ecology / clinical trials / pre-clinical research
-
-
-- Some statistical thinking goes a long way
-- Many problems would be much simpler if they were re-framed in terms of linear models.
-- Other approaches make life difficult and lead to inefficiencies and mistakes
+    * Some statistical thinking goes a long way
+    * Many problems would be much simpler if they were re-framed in terms of linear models.
+    * Other approaches make life difficult and lead to inefficiencies and mistakes
 
 ## About you!
+
+- Name, previous work, experience with stats software.
 
 # Models and distributions
 
@@ -257,7 +264,7 @@ How should you set about the scope of a statistical problem?
 
 -   We also have to assume or determine the shape of the distribution.
 
--   Often assume continuous variables are **independently normally distributed**
+-   As a baseline - assume continuous variables are **independently normally distributed**
 
 ## Model
 
@@ -422,6 +429,8 @@ There is also uncertainty in the standard deviation estimate, but this is harder
 
 What can we really say about the mean and spread of student heights?
 
+Is it plausible that the true mean height is 170cm?  160cm?
+
 ```{r }
 library(car)
 linearHypothesis(model1, "(Intercept)=170")
@@ -433,44 +442,34 @@ confint(model1)
 broom::tidy(model1 , conf.int=TRUE)
 ```
 
+The confidence interval gives us every plausible value of the parameter given the data.
+
 ## Diagnostics
 
-How good is our model? What were the model assumptions?
+* How good is our model? What were the model assumptions?
 
--   Heights are normally distributed
--   Individuals heights are independent of each other
--   (You are a representative sample of students)
+ -   Heights are normally distributed
+ -   Individuals heights are independent of each other
+ -   (Our sample is representative)
 
-Can we check these?
+. . . 
 
-## Process
+* How we check these?
 
-So we have a process for any statistical analysis!
+   - Why are heights normal distributed?
 
-```{mermaid}
-flowchart LR
-  A[Write down a model how data are linked to parameters] --> B[Estimate the parameters]
-  B --> C[Does model fit data?]
-  C --> D[Interpret]
-  C --> A
-```
 
 ## Exercise
 
 A student questionnaire was conducted at Adelaide University. We'll use this dataset to answer some interesting questions.
 
-2.  Consider a linear model for student height
+1.  Load data into R.
 
-3.  Load data into R.
+2.  Estimate a model in R to find the distribution of student heights.
 
-    -   Calculate some descriptive statistics
-    -   Make some plots
+3.  Check whether the heights are normally distributed
 
-4.  Estimate a model in R to find the distribution of student heights.
-
-5.  Diagnose the model
-
-6.  Check whether just using R to calculate the mean and standard deviation of student heights gives you the same answer.
+4.  Check whether using the `mean` and `sd` functions in R gives you the same answer.
 
 # Extending our linear model
 
@@ -478,7 +477,7 @@ A student questionnaire was conducted at Adelaide University. We'll use this dat
 
 -   Let's improve our model.
 
--   Why might we want a model?
+-   Remind ourselves of the purpose of a model
 
     -   We might have a specific hypothesis to test
 
@@ -532,23 +531,26 @@ table(dat$Sex)
 dat
 ```
 
+## Plotting
+
 Make some plots:
 
 ```{r }
-library(ggplot2)
-ggplot(dat , aes(x=Sex, y=Height)) + geom_boxplot() + geom_point() + theme_bw()
+library(ggbeeswarm)
+ggplot(dat , aes(x=Sex, y=Height)) + geom_boxplot() + geom_beeswarm() + theme_bw()
 ```
 
-------------------------------------------------------------------------
+## Estimating with R
 
 ```{r }
 model2 <- lm( Height ~ Sex , data=dat)
 summary(model2)
+extract_eq(model2 , useCoefs=TRUE)
 ```
 
-    plot(model2)
-
 ## Diagnostic plots
+
+How well does our model fit its assupmtions
 
 ```{r }
 par(mfrow=c(2,2))
@@ -557,37 +559,42 @@ plot(model2)
 
 ## Interpretation
 
-Look at:
-
 -   Interpreting coefficients and confidence intervals
 
-```{r }
-library(equatiomatic)
-library(broom)
+. . .
 
+```{r }
 tidy(model2, conf.int=TRUE)
-```
-
-```{r }
 extract_eq(model2, use_coefs = TRUE)
 ```
 
+
 -   Statistical significance
+
+. . .
 
 ```{r }
 coef(summary(model2))
 ```
 
+--- 
+
 -   Marginal means
 
+. . .
+
 ```{r }
-emmeans::emmeans(model2 , ~Sex)
+emmeans(model2 , ~Sex)
 ```
 
--   Variance explained compared to a null model / ANOVA
+-   Comparing models
+
+. . .
+
 
 ```{r }
-
+model1 <- lm( Height ~ 1 , data=dat)
+anova(model1, model2)
 ```
 
 ## A continuous predictor
@@ -600,6 +607,8 @@ ggplot(data=dat, aes(Height, Wr.Hnd, shape=Sex)) + geom_point()
 
 Can you write down a model for how hand span depends on height?
 
+--- 
+
 ```{r }
 model3 <- lm(data=dat, Wr.Hnd ~ Height)
 summary(model3)
@@ -607,7 +616,7 @@ summary(model3)
 
 ## Multiple predictors
 
-Can we better explain the hand width model?
+Can we better explain the hand width model by adding a second predictor?
 
 ```{r }
 model4 <- lm(data=dat, Wr.Hnd ~ Height + Sex)
@@ -629,13 +638,11 @@ modelsummary(list(model3, model4))
 ## Predictions
 
 ```{r }
+
 library(patchwork)
-dat$predict3 <- predict(model3, newdata = dat)
-dat$predict4 <- predict(model4, newdata = dat)
 
-(ggplot(data=dat, aes(Height, Wr.Hnd)) + geom_point() + geom_line(aes(y=predict3), lwd=1))+
-(ggplot(data=dat, aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=predict4), lwd=1) +scale_color_manual(values=c("black", "red")))
-
+(ggplot(data=augment(model3), aes(Height, Wr.Hnd)) + geom_point() + geom_line(aes(y=.fitted), lwd=1))+
+(ggplot(data=augment(model4), aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=.fitted), lwd=1) +scale_color_manual(values=c("black", "red")))
 ```
 
 ## Interactions
@@ -644,18 +651,26 @@ Finally, we might ask if there's any evidence that the slope is different betwee
 
 How could we make a model to test this hypothesis?
 
+---
+
 ```{r }
+model5 <- lm(data=dat, Wr.Hnd ~ Height + Sex + Height:Sex)
 model5 <- lm(data=dat, Wr.Hnd ~ Height * Sex)
+extract_eq(model5)
+```
+
+---
+
+```{r }
 summary(model5)
 ```
 
 ------------------------------------------------------------------------
 
 ```{r }
-dat$predict5 <- predict(model5, newdata = dat)
-(ggplot(data=dat, aes(Height, Wr.Hnd)) + geom_point() + geom_line(aes(y=predict3), lwd=1))+
-(ggplot(data=dat, aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=predict4), lwd=1) +scale_color_manual(values=c("black", "red"))) + 
-(ggplot(data=dat, aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=predict5), lwd=1) +scale_color_manual(values=c("black", "red"))) + plot_layout(guides="collect")
+(ggplot(data=augment(model3), aes(Height, Wr.Hnd)) + geom_point() + geom_line(aes(y=.fitted), lwd=1))+
+(ggplot(data=augment(model4), aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=.fitted), lwd=1) +scale_color_manual(values=c("black", "red"))) + 
+(ggplot(data=augment(model5), aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=.fitted), lwd=1) +scale_color_manual(values=c("black", "red"))) + plot_layout(guides="collect")
 ```
 
 ## Model comparison
@@ -680,9 +695,23 @@ What statistical tests/procedures have we replaced with a linear model?
 All other statistical tests can be reframed in this way:
 
 -   Models for count or categorical outcomes
+-   Paired data
 -   Non-parametric tests
--   Non-linear models
 -   More complex machine learning
+-   Non-linear models are usually straightforward extensions
+
+https://lindeloev.github.io/tests-as-linear/#9_teaching_materials_and_a_course_outline  
+
+## Exercise
+
+Look at the iris data in R.
+
+We'll use linear models to answer some questions about the relationship between the petals and the sepals.
+
+1. What is the mean and standard deviation of sepal length?
+2. Does sepal length vary by species?
+3. Is sepal length predicted by sepal width?
+4. What happens if you stratify by species?
 
 ## Dealing with non-normal data
 
