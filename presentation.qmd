@@ -6,9 +6,10 @@ format:
   revealjs:
     theme: [dark]
     slide-number: true
+    css: "custom.css"
     scrollable: true
     transition: slide
-    incremental: true
+    incremental: false
   html:
     toc: true
 ---
@@ -27,8 +28,15 @@ Start RStudio..
 
 Make sure you have these packages installed..
 
-```{r getsetup, warning=FALSE}
+```{r eval=FALSE}
+install.packages(c("UsingR", "equatiomatic", "emmeans", "broom", 
+                   "performance", "ggplot2", "gamlss", "car",
+                   "patchwork", "ggbeeswarm", "readxl"))
+```
+
+```{r getsetup, warning=FALSE, message=FALSE}
 library(UsingR) # dataset
+library(readxl) # reading data from excel files
 library(equatiomatic) # making equations from models
 library(emmeans) # marginal means
 library(broom) # enhancements to model
@@ -37,14 +45,27 @@ library(ggplot2) # making graphs
 library(gamlss) # enhanced modelling
 library(car)    # hypothesis tests 
 library(ggbeeswarm) # beeswarm graphs
-
-# install.packages("UsingR", "equatiomatic", "emmeans", "broom", "performance", "ggplot2", "gamlss", "car")
+library(patchwork) # place plots side-by-side
 
 ```
 
 ## Files for the session:
 
+Data:
+
+* `diversity.csv` 
+* `survey.csv`
+* `observations.csv`
+
+Code, slides and handouts:
+
+* `presentation.qmd`
+* `presentation.html`
+* `linearmodels.pptx`
+
 ## What is a linear model?
+
+. . .
 
 ```{r echo=FALSE}
 
@@ -54,8 +75,8 @@ ggplot(kid.weights , aes(x=age,y=height))  + geom_point() +
   labs(x="Age (years)",y="Height (ins)")
 ```
 
-What questions might we ask?
-What form could the answer take?
+* What questions might we ask?
+* What form could the answer take?
 
 ## What is a linear model?
 
@@ -72,15 +93,22 @@ $$\text{Height}=a+b\times \text{Age}$$
 
 ## What is a linear model
 
-* Describes the relationship between an outcome and its predictors.
+* Describes a linear relationship between an [outcome]{style="color:lightblue"} and its [predictors]{style="color:lightgreen"}.
 
 * What is the model for?
+
+* Who is interested and what will it be used for?
 
 ## Fitting our model in R
 
 ```{r }
 model1 <- lm( height ~ age , data = kid.weights )
 extract_eq(model1)
+```
+
+. . . 
+
+```{r }
 tidy(model1)
 extract_eq(model1, use_coefs=TRUE)
 ```
@@ -88,20 +116,20 @@ extract_eq(model1, use_coefs=TRUE)
 
 ## What can we do with this?
 
+::: {.incremental}
 * Describe the relationship?
-
 * Predict new values of height from age?
-
+:::
 --- 
 
 ```{r  }
 
 newages = data.frame(age=12*(1:20))
 
-model1 |> predict (  newdata = newages ) |> cbind(newages)
+model1 |> predict (newdata = newages) |> cbind(newages)
 ```
 
-## Prediction intervals (variation between points)
+## Prediction intervals
 
 ```{r addingpredictions}
 model1 |> augment(interval="prediction") |>
@@ -114,7 +142,7 @@ model1 |> augment(interval="prediction") |>
 
 ```
 
-## Confidence intervals (uncertainty in the average)
+## Confidence intervals
 
 ```{r addingconfidence}
 model1 |> augment(interval="confidence") |>
@@ -128,23 +156,38 @@ model1 |> augment(interval="confidence") |>
 ## Our model is done:
 
 ```{r }
+extract_eq(model1)
 extract_eq(model1, use_coefs = TRUE)
 ```
 
-Standard error of variance = `r round(sigma(model1),2)`
+Standard deviation of 'error' = `r round(sigma(model1),2)`
 
+$$\epsilon \sim N(0,4.77^2)$$
 
-## Example 2
+## Summary 1
 
-Weight by age.  Can we apply the same method?
+::: {.incremental}
+* A linear model describes the linear relationship between an outcome and predictors
+* Can be used for prediction or inference
+
+* Simple linear models are fit in R using `lm`.
+* `broom::augment` makes it easy to get predictions.
+* Visualisations allow us to check model fit.
+
+* Confidence intervals reflect uncertainty around means
+* Prediction intervals reflect likely variation in new points
+:::
+
+## Example 2 - Weight by Age
+
+Can we apply the same method to this dataset?
 
 Can you forsee a problem?
 
 ```{r }
 ggplot(kid.weights, aes(x=age,y=weight))   + 
   theme_bw(base_size = 18)+ 
-  geom_point() +
-  labs(x="Age (months)",y="Weight (lbs)")
+  geom_point() + labs(x="Age (months)",y="Weight (lbs)")
 ```
 
 ## Example 2
@@ -154,9 +197,8 @@ What are the limitations of the 'regular' linear model?
 ```{r }
 model2 <- lm( weight ~ age , data = kid.weights )
 model2 |> augment(interval="prediction") |>
-  ggplot(aes(x=age,y=weight))   + 
-  theme_bw(base_size = 18)+ 
-  geom_ribbon( aes(y=.fitted, ymin=.lower, ymax=.upper), alpha=0.2,fill="blue") + 
+  ggplot(aes(x=age,y=weight))+theme_bw(base_size = 18)+ 
+  geom_ribbon(aes(y=.fitted, ymin=.lower, ymax=.upper),alpha=0.2,fill="blue") + 
   geom_line( aes(y=.fitted)) + geom_point() +
   labs(x="Age (months)",y="Weight (lbs)")
 ```
@@ -174,7 +216,7 @@ points(kid.weights$age , kid.weights$weight)
 
 ```
 
-## Enhancing out model 1
+## Enhancing our model 1
 
 ```{r }
 summary(model2b)
@@ -183,7 +225,7 @@ summary(model2b)
 
 ## Enhancing our model 2
 
-We can model how the skew changes with age.
+We can also model how the *skew* changes with age!
 
 ```{r }
 model2c <- gamlss( weight ~ age , sigma.formula = ~age , nu.formula = ~age ,
@@ -198,45 +240,59 @@ points(kid.weights$age , kid.weights$weight)
 summary(model2c)
 ```
 
+## Summary 2
+::: {.incremental}
+* We can model things other than the mean!
 
-## Learning objectives
+* In the old days (when I was training) this would have been very difficult
 
+* Now `gamlss` and Bayesian analysis makes it easy
+
+* How good does a model need to be?
+:::
+## Learning objectives for today {.smaller}
+::: {.incremental}
 -   Distributions and Modelling
-    -   Estimating parameters
-    -   Re-framing hypothesis tests as linear models
+    -   Estimating parameters with linear models
+    -   Re-framing *all* hypothesis tests as linear models
     -   Continuous and discrete predictors
     -   Interpreting and diagnosing models
 
 -   Extensions and generalisations:
-    -   Multiple predictors / interactions (More complex hypotheses)
+    -   Multiple predictors / interactions (more complex hypotheses)
     -   Log-transformations
     -   Logistic regression for binary data
-
+:::
 ## Aim
 
 -   Start to understand the 'modelling' approach to statistics
 
 -   Enable you to explore this extensive framework to do almost any kind of statistical / ML analysis
 
+-   Get familiar with how to do this in R
+
 -   Become a statistician?
 
 ## About me!
 
-- Statistician at Quadram Institute Bioscience (2017-present)
+:::{.incremental}
+- Statistician at Quadram Institute Bioscience since 2017
 
 - Support for epidemiology / genomics / ecology / clinical trials / pre-clinical research
     * Some statistical thinking goes a long way
     * Many problems would be much simpler if they were re-framed in terms of linear models.
     * Other approaches make life difficult and lead to inefficiencies and mistakes
-
+    * Statistics is a <span style="color:red">super-power!</span>
+:::
 ## About you!
 
 - Name, previous work, experience with stats software.
 
-# Models and distributions
+# Inference, Models and Distributions
 
-## A simple motivating problem
+## A simple motivating problem {.smaller}
 
+:::{.incremental}
 -   Suppose we are interested in understanding the typical heights of UEA students?
 
 -   How should we go about this?
@@ -245,16 +301,23 @@ summary(model2c)
 
     -   What should the answer look like?
     -   How will we know we are done?
-
+:::
 . . .
 
 ::: callout-tip
 ## Setting the question
-
-How should you set about the scope of a statistical problem?
+How should you set the scope of a statistical problem?
 :::
 
-## A distribution and a model
+## Inference
+
+* What is the *target population*?
+
+* What is the *sampling frame*?
+
+* What is the *sample*?
+
+## A distribution and a model {.incremental}
 
 -   Students heights are not all the same, they have a 'distribution'.
 
@@ -320,7 +383,7 @@ The model has a [structural]{style="color: green;"} part and an [error]{style="c
 
 This is the simplest linear model.
 
-## So what is a model?
+## So what is a model? {.smaller}
 
 Here's our model for heights:
 
@@ -328,16 +391,17 @@ $$
 \boxed{h_i = \mu + \epsilon_i\quad\text{where}\quad\epsilon_i \sim N(0,\sigma^2)}
 $$
 
+:::{.incremental}
 -   A model is a mathematical or statistical way of writing down how we think our outcome is distributed
 
 -   The model needs to be good enough for the purpose!
 
     -   ***All models are wrong, but some are useful***
 
--   It needs to link the aspects of the process we are interested in (mean $\mu$ and variance $\sigma^2$) to the data that we can observe ($h_i$).
+-   It needs to link the aspects of the process we are interested in (*true but unknown* mean $\mu$ and variance $\sigma^2$) to the data that we can *observe* ($h_i$).
 
-    -   Here it's just a mean and variance but we can add things to this equation if we think they affect height.
-
+    -   Here it's just a mean and variance we want to learn about but we can add things to this equation if we think they affect height.
+:::
 ## Do I *need* a model to do analysis?
 
 -   Yes! Whenever you're doing any kind of statistics there is an underlying model.
@@ -404,10 +468,9 @@ Estimate the model:
 
 ```{r echo=TRUE}
 model1 <- lm( height ~ 1 , data=dat)
-
-print(model1)
-
 ```
+
+--- 
 
 Display the model summary:
 
@@ -417,32 +480,40 @@ summary(model1)
 
 ```
 
-## Uncertainty
+## Uncertainty {.incremental}
+* Is our parameter estimate perfect? Have we completely discovered the average height of UEA students?
 
-Is our parameter estimate perfect? Have we completely discovered the average height of UEA students?
+* The confidence interval and standard error reflect the uncertainty in the estimate.
 
-The confidence interval and standard error reflect the uncertainty in the estimate.
-
-There is also uncertainty in the standard deviation estimate, but this is harder to calculate using R and we don't often use it.
+* (There is also uncertainty in the standard deviation estimate, but this is harder to calculate using R and we don't often use it.)
 
 ## Thinking about uncertainty
 
 What can we really say about the mean and spread of student heights?
 
-Is it plausible that the true mean height is 170cm?  160cm?
+Is it plausible that the true mean height is 170cm?
+
+. . . 
 
 ```{r }
-library(car)
 linearHypothesis(model1, "(Intercept)=170")
-linearHypothesis(model1, "(Intercept)=160")
-linearHypothesis(model1, "(Intercept)=163.5")
+```
 
+. . . 
+
+Try some other values.  160cm, 163cm?
+
+--- 
+
+```{r }
 confint(model1)
 
 broom::tidy(model1 , conf.int=TRUE)
 ```
 
-The confidence interval gives us every plausible value of the parameter given the data.
+* The confidence interval gives us every *plausible* value of the parameter given the data.
+
+* That is, every value not rejected at p<0.05 (for a 95% interval)
 
 ## Diagnostics
 
@@ -452,18 +523,34 @@ The confidence interval gives us every plausible value of the parameter given th
  -   Individuals heights are independent of each other
  -   (Our sample is representative)
 
-. . . 
+--- 
 
-* How we check these?
+* How can we check normality?
 
-   - Why are heights normal distributed?
+* A `qqplot` compares model residuals with a normal distribution:
 
+```{r }
+plot(model1 , which=2)
+```
+
+* How might we check assumptions of independence and representativeness?
+
+## Summary 3
+
+* Statistical inference is trying to estimate something fixed but unknown in a population using observed data in a sample
+* The model links the unknown parameters to the observed data
+* Allows us to do prediction and inference
+
+* There is a duality between confidence intervals and p-values
+* We can check normality using qqplots.  A visual inspection like this is better than statistical `tests` for normality that you might see.
+
+# Adelaide data
 
 ## Exercise
 
 A student questionnaire was conducted at Adelaide University. We'll use this dataset to answer some interesting questions.
 
-1.  Load data into R.
+1.  Load data into R (from `"survey.xlsx"`)
 
 2.  Estimate a model in R to find the distribution of student heights.
 
@@ -473,8 +560,9 @@ A student questionnaire was conducted at Adelaide University. We'll use this dat
 
 # Extending our linear model
 
-## Adding a predictor (finally!)
+## Adding a predictor {.smaller}
 
+:::{.incremental}
 -   Let's improve our model.
 
 -   Remind ourselves of the purpose of a model
@@ -488,10 +576,11 @@ A student questionnaire was conducted at Adelaide University. We'll use this dat
 -   Can we improve our height prediction?
 
 -   Can we add a factor to our model that helps to explain height?
+:::
 
-## 
+## {.smaller}
 
-Height varies with a normal distribution, but with a different average for men and women.
+Different average for men and women.
 
 . . .
 
@@ -517,35 +606,40 @@ $$
 
 . . .
 
-Can you interpret this model? What are the mean heights for men and women under this model? What does $\beta$ represent?
+Can you interpret this model? 
+
+. . . 
+
+What are the mean heights for men and women under this model? 
+
+. . . 
+
+What does $\beta$ represent?
 
 ## Estimating our new model using R
 
-Using the Adelaide survey data:
-
 ```{r }
-library(readxl)
-dat <- read_excel("survey.xlsx", na="NA")
-dat <- dat[!is.na(dat$Sex), ]
+dat <- read_excel("survey.xlsx", na="NA") |> remove_missing()
 table(dat$Sex)
-dat
+head(dat)
 ```
 
 ## Plotting
 
-Make some plots:
+A graph is a good way to start modelling!
 
 ```{r }
-library(ggbeeswarm)
-ggplot(dat , aes(x=Sex, y=Height)) + geom_boxplot() + geom_beeswarm() + theme_bw()
+ggplot(dat , aes(x=Sex, y=Height)) + 
+  geom_boxplot() + geom_beeswarm() + theme_bw()
 ```
 
 ## Estimating with R
 
 ```{r }
 model2 <- lm( Height ~ Sex , data=dat)
-summary(model2)
-extract_eq(model2 , useCoefs=TRUE)
+extract_eq(model2)
+extract_eq(model2 , use_coefs=TRUE)
+
 ```
 
 ## Diagnostic plots
@@ -569,14 +663,6 @@ extract_eq(model2, use_coefs = TRUE)
 ```
 
 
--   Statistical significance
-
-. . .
-
-```{r }
-coef(summary(model2))
-```
-
 --- 
 
 -   Marginal means
@@ -597,7 +683,15 @@ model1 <- lm( Height ~ 1 , data=dat)
 anova(model1, model2)
 ```
 
-## A continuous predictor
+## Summary 4
+
+* A linear model can be used to replace a t-test
+
+* (Comparison of a single outcome across two independent groups)
+
+* Why should we prefer this to a t-test?
+
+## A multiple regression
 
 Let's repeat this process to understand how hand span depends on height.
 
@@ -605,14 +699,15 @@ Let's repeat this process to understand how hand span depends on height.
 ggplot(data=dat, aes(Height, Wr.Hnd, shape=Sex)) + geom_point() 
 ```
 
-Can you write down a model for how hand span depends on height?
-
+Can you write down a model for how hand span depends on height? Can you estimate it using R?
 --- 
 
 ```{r }
 model3 <- lm(data=dat, Wr.Hnd ~ Height)
 summary(model3)
 ```
+
+Interpret and diagnose (test model assumptions) this model
 
 ## Multiple predictors
 
@@ -621,37 +716,43 @@ Can we better explain the hand width model by adding a second predictor?
 ```{r }
 model4 <- lm(data=dat, Wr.Hnd ~ Height + Sex)
 summary(model4)
-
-extract_eq(model4)
-
 ```
 
 ------------------------------------------------------------------------
 
-Compare the two models. What do they tell you? Which is better?
+Compare the two models. What do they tell you? Which is fitting the data better?
 
 ```{r }
-library(modelsummary)
-modelsummary(list(model3, model4))
+extract_eq(model3, use_coefs = TRUE)
+extract_eq(model4, use_coefs = TRUE)
+
+sigma(model3)
+sigma(model4)
+
+```
+
+--- 
+
+Is the new model *significantly* better?
+
+```{r }
+anova(model4, model3)
 ```
 
 ## Predictions
 
 ```{r }
-
-library(patchwork)
-
 (ggplot(data=augment(model3), aes(Height, Wr.Hnd)) + geom_point() + geom_line(aes(y=.fitted), lwd=1))+
 (ggplot(data=augment(model4), aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=.fitted), lwd=1) +scale_color_manual(values=c("black", "red")))
 ```
 
-## Interactions
+## Interactions {.smaller}
 
 Finally, we might ask if there's any evidence that the slope is different between men and women.
 
 How could we make a model to test this hypothesis?
 
----
+. . .
 
 ```{r }
 model5 <- lm(data=dat, Wr.Hnd ~ Height + Sex + Height:Sex)
@@ -665,25 +766,45 @@ extract_eq(model5)
 summary(model5)
 ```
 
+---
+
+```{r }
+extract_eq(model4, use_coefs = TRUE)
+extract_eq(model5, use_coefs = TRUE, wrap=TRUE, terms_per_line = 2)
+```
+
+
 ------------------------------------------------------------------------
 
 ```{r }
 (ggplot(data=augment(model3), aes(Height, Wr.Hnd)) + geom_point() + geom_line(aes(y=.fitted), lwd=1))+
 (ggplot(data=augment(model4), aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=.fitted), lwd=1) +scale_color_manual(values=c("black", "red"))) + 
-(ggplot(data=augment(model5), aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=.fitted), lwd=1) +scale_color_manual(values=c("black", "red"))) + plot_layout(guides="collect")
+(ggplot(data=augment(model5), aes(Height, Wr.Hnd, color=Sex)) + geom_point() + geom_line(aes(y=.fitted), lwd=1) +scale_color_manual(values=c("black", "red"))) +
+  plot_layout(guides="collect")
 ```
 
-## Model comparison
+## Model comparison {.smaller}
 
-ANOVA compares the improvement in fit between models to the improvement that would be expected if there was no real change.
+ANOVA compares the (1) improvement in fit between models to (2) the improvement that would be expected if there was no real difference in the population.
+
+The p-values reflect the statistical significance of the improvement as we increase the model complexity.
 
 ```{r }
 anova(model3, model4, model5)
 ```
 
+Is the interaction term needed?
+
+## Summary {.incremental}
+
+* We can add multiple predictors to improve a model
+* Linear models can replace ANCOVA
+* Interactions tell us whether effects are different across sub-groups
+* Models can be compared using p-values to test whether additional terms are needed
+
 # Extensions
 
-## Everything is a linear model
+## Everything is a linear model {.smaller}
 
 What statistical tests/procedures have we replaced with a linear model?
 
@@ -700,52 +821,124 @@ All other statistical tests can be reframed in this way:
 -   More complex machine learning
 -   Non-linear models are usually straightforward extensions
 
-https://lindeloev.github.io/tests-as-linear/#9_teaching_materials_and_a_course_outline  
+<https://lindeloev.github.io/tests-as-linear/#9_teaching_materials_and_a_course_outline>
 
-## Exercise
+## Exercise {.smaller}
 
-Look at the iris data in R.
+Look at the diversity data in R.
 
-We'll use linear models to answer some questions about the relationship between the petals and the sepals.
+```{r }
+diversityDay <- read.csv("diversity.csv")
+```
 
-1. What is the mean and standard deviation of sepal length?
-2. Does sepal length vary by species?
-3. Is sepal length predicted by sepal width?
-4. What happens if you stratify by species?
+This is data from a real experiment to explore gut microbial diversity over time in hospital patients.
 
-## Dealing with non-normal data
+We'll use linear models to test whether `diversity` changes over `time`.
 
--   So far we've seen data that can be modelled using normal distributions.
+1. What is the mean and standard deviation of diversity across all samples?
+2. Plot how microbial diversity varies with time.
+3. Is microbial diversity *correlated* with time?
+4. Is the correlation statistically significant?
+5. What happens if we adjust for patient (add patient to the model)?
+
+## Dealing with non-normal data {.incremental}
+
+-   So far we've seen data that can be modelled using normal distributions, where the relationships are genuinely straight lines.
 
 -   Biological data very often does not act like this
 
 -   What options do we have?
 
+  * Funkier models?
+  * Transformations?
+
 ## Animal traits
+
+The body mass of animals is linked to their metabolic rate.
 
 ```{r }
 animals <- read.csv("observations.csv")
-library(ggplot2)
-ggplot(animals, aes(body.mass,metabolic.rate,col=phylum)) + geom_point() + scale_x_log10() + scale_y_log10() + facet_wrap(~phylum)
-
+ggplot(animals, aes(body.mass,metabolic.rate,col=phylum)) + 
+  geom_point() + facet_wrap(~phylum, scale="free")
 ```
 
-## Logarithmic transformations
+Can we fit a linear model to this?
 
-Instead of modelling on y, we can model log(y).
+## Logarithmic transformation
+
+The same data plotted on a different scale:
+
+```{r }
+ggplot(animals, aes(body.mass,metabolic.rate,col=phylum)) + 
+  geom_point() + scale_x_log10() + scale_y_log10()
+```
+
+
+## Logarithmic transformations {.smaller}
+
+Instead of modelling how $y$ depends on $x$, we can model how $\log(y)$ depends on $\log(x)$.
+
+. . .
 
 -   This is a very commonly used approach and it is surprising how often and how well it works.
 
-$$\log(y_i) = a + bx_i + \epsilon_i$$
+$$\log(y_i) = a + b\log(x_i) + \epsilon_i$$
+
+. . . 
+
 
 -   Implies
 
-$$y_i = \exp(a + bx + e) = e^a\times e^{bx_i}\times e^{\epsilon_i}$$
-
-or
-
-$$y_i = \alpha\times \beta^{x_i}\times e^{\epsilon_i}$$
+$$y_i = \exp(a + b\log(x_i) + e) = e^a\times x_i^{b}\times e^{\epsilon_i}$$
 
 -   So instead of an additive model, we have a multiplicative one.
 
--   But we estimate it as a regular linear model, using $\log(y)$ as the outcome.
+-   But we estimate using R as a regular linear model, using $\log(y)$ as the outcome and $\log(x)$ as the predictor.
+
+--- 
+
+```{r }
+modelAnimals <- lm(data=animals , log(metabolic.rate) ~ log(body.mass)*phylum)
+summary(modelAnimals)
+```
+
+--- 
+
+
+```{r }
+augment(modelAnimals, interval="prediction") |>
+  ggplot(aes(x=`log(body.mass)`, y=`log(metabolic.rate)`, col=phylum, fill=phylum)) +  
+  geom_point() + 
+  geom_line(aes(y=.fitted)) +
+  geom_ribbon(aes(y=.fitted,ymin=.lower,ymax=.upper),alpha=0.2) + 
+  facet_wrap(~phylum, scale="free")
+  
+
+```
+
+--- 
+
+```{r }
+animals$predicted <- predict(modelAnimals, newdata = animals, type="response")
+
+augment(modelAnimals, interval="prediction") |>
+  ggplot(aes(x=exp(`log(body.mass)`), y=exp(`log(metabolic.rate)`), col=phylum, fill=phylum)) +  
+  geom_point() + 
+  geom_line(aes(y=exp(.fitted))) +
+  geom_ribbon(aes(y=exp(.fitted),ymin=exp(.lower),ymax=exp(.upper)),alpha=0.2) + 
+  facet_wrap(~phylum, scale="free")
+  
+
+```
+
+--- 
+
+## Summary 5
+
+* Linear models can be useful for data that does not look linear!
+
+* Next time:
+
+* Binary data (logistic regression)
+
+* Multilevel models (more complex errors)
