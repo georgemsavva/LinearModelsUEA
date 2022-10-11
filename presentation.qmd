@@ -10,8 +10,11 @@ format:
     scrollable: true
     transition: slide
     incremental: false
+    self-contained: true
   html:
     toc: true
+    output-file: "handout.html"
+    self-contained: true
 ---
 
 # Introduction
@@ -61,6 +64,7 @@ Code, slides and handouts:
 
 * `presentation.qmd`
 * `presentation.html`
+* `handout.html`
 * `linearmodels.pptx`
 
 ## What is a linear model?
