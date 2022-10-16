@@ -1,0 +1,195 @@
+---
+title: "Attractors"
+author: "George Savva"
+format:
+  revealjs:
+    theme: [dark]
+    slide-number: true
+    #css: "custom.css"
+    scrollable: true
+    fig-align: center
+    echo: true
+    transition: slide
+    incremental: false
+    self-contained: true
+---
+
+
+```{r echo=FALSE}
+library(imager)
+l=seq(-2,2,l=1000)
+par(bg=hsv(0,0,0,0), mar=c(0,0,0,0))
+```
+
+# 1. Hubris
+
+::: {.notes}
+I started making art with the idea that computers ought to be better at making it than people
+
+I had the idea that, after all, an image is just a set of pixels, and there's no reason why you couldn't searh through the possible arrangements of these pixels, optimising for some criterion 
+
+This is an idea that'd been rumbling around in my mind for a while, but I didn't have the computing tools necessary to do this until about 2019... I'd picked up the idea and played with it for a while back in the 00s when I was a student but a career in proper statistics distracted me...
+
+But working again in computational biology, the idea of evolving images towards some objective measure of beauty was appealing.
+
+
+OK - so we need a representation of an image.
+
+Note - I'm not talking about AI art or machine learning here.. what I'm dealing with is fashioned maths and programming.  I have no interest at all in black box mimicry, leaves me cold.  I need to see the entire process.
+
+So...a statistical programmer with no training at all is going to invent a system to define an image in maths, and then steer the maths towards something cool.
+
+Now, all this was going to rest on how you describe an image to a computer, and then how you manipulate this.
+
+
+:::
+
+## What is an image?
+
+An image is defined by its colour at every point.  
+
+So any mapping of locations to colours defines an image!
+
+Locations are two dimensional, colours are three dimensional
+
+So any function:
+
+$$f: \mathbb{R}^2 \rightarrow \mathbb{R}^3$$
+
+defines an image, and every image is such a function.
+
+---  
+
+$$
+f(x,y)=\left\{\begin{array}{ll}
+0 & \text{if}\quad x^2+y^2<1\\
+1 & \text{otherwise}
+\end{array}\right.
+$$
+
+```{r echo=FALSE}
+#| code-line-numbers: 2
+outer(X=l,Y=l,\(X,Y) 
+      X^2+Y^2 > 1 
+) |> as.cimg() |> plot(ax=F,as=1)
+```
+
+---  
+
+For a fake Malevich:  
+
+$$
+\text{f(x,y)}=\left\{\begin{array}{ll}
+0 & \text{if}\quad \max(|x|, |y|)<1.5\\
+1 & \text{otherwise}
+\end{array}\right.
+$$
+
+
+```{r}
+#| code-line-numbers: 2
+outer(X=l,Y=l,\(X,Y) 
+      pmax(Mod(X),Mod(Y)) > 1.5 
+) |> as.cimg() |> plot(ax=F,as=1)
+
+```
+
+
+---
+
+$$
+f(x,y)=(\sin(3x)^2+\cos(3y)^2)\ \text{Mod}\ 0.2 > 0.1
+$$
+
+
+```{r}
+#| code-line-numbers: 2
+outer(X=l,Y=l,\(X,Y) 
+      (sin(X*3)^2 + cos(Y*3)^2)%%0.2 > 0.1
+) |> as.cimg() |> plot(ax=F,as=1)
+
+```
+
+---
+
+```{r echo=F}
+plotfunctions <- function(h,s,v,X,Y){
+    a <- array(dim=c(length(X),length(Y),3))
+  a[,,1] <- 180*(Mod(outer(X,Y,h))%%1)
+  a[,,2] <- outer(X,Y,s)%%1
+  a[,,3] <- outer(X,Y,v)%%1
+  #print(a)
+  b=HSVtoRGB(as.cimg(a))
+  #print(as.array(b))
+    par(bg=hsv(0,0,0,0), mar=c(0,0,0,0))
+  b |> plot(ax=F,as=1, rescale=F)
+}
+```
+
+```{r echo=F}
+plotfunctionsC <- function(h,s,v,X,Y){
+    a <- array(dim=c(length(X),length(Y),3))
+  a[,,1] <- 360*(Mod(outer(X,Y,\(X,Y) h(X+1i*Y)))%%1)
+  a[,,2] <- outer(X,Y,\(X,Y) s(X+1i*Y))%%1
+  a[,,3] <- outer(X,Y,\(X,Y) v(X+1i*Y))%%1
+  #print(a)
+  b=HSVtoRGB(as.cimg(a))
+  #print(as.array(b))
+  par(bg=hsv(0,0,0,0), mar=c(0,0,0,0))
+  b |> plot(ax=F,as=1, rescale=F)
+}
+
+
+```
+
+--- 
+
+```{r echo=T}
+plotfunctions(
+  h=\(X,Y) X/2,
+  s=\(X,Y) sin(3*X)+cos(3*Y),
+  v=\(X,Y) cos(3*X)+sin(3*Y),
+  l,l
+  )
+```
+
+--- 
+
+```{r echo=T}
+plotfunctions(
+  h=\(X,Y) X/2,
+  s=\(X,Y) sin(3*X)+cos(3*Y)+.1*rnorm(length(X)),
+  v=\(X,Y) cos(3*X)+sin(3*Y)+.1*rnorm(length(X)),
+  l,l
+  )
+```
+
+--- 
+
+```{r echo=T}
+plotfunctionsC(
+  h=\(Z) Arg(atan(Z)),
+  s=\(Z) Mod(atan(Z)),
+  v=\(Z) Arg(Z*10)+Mod(Z),
+  l,l
+  )
+```
+
+--- 
+
+# What makes an image good?
+
+
+
+# 2. Humility
+
+What I'd done is reinvent domain colouring. 
+
+This is a mathematical technique that represents simple functions, but uses colours to represent values.  It's typically applied as a visualisation tool, people don't seem to have thought about it much from a purely aesthetic point of view.
+
+
+# 3. History
+
+# 4. Chaos
+
+# 5. Victorian
