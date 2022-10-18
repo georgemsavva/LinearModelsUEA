@@ -1,18 +1,29 @@
 ---
 title: "Attractors"
+title-slide-attributes: 
+  data-background-iframe: "https://gateway.fxhash2.xyz/ipfs/QmRw93LKHy8VezSjgQj1L92n6sJMvnCt2t2wtxSVu3roue/?fxhash=oohu8WTUHc37BaLufAqaQi7JWByxwSSXK5aJzv4nKeXHSNEHQft"
 author: "George Savva"
+execute:
+  cache: true
 format:
   revealjs:
     theme: [dark]
     slide-number: true
     #css: "custom.css"
-    scrollable: true
+    scrollable: false
     fig-align: center
     echo: true
-    transition: slide
+    transition: fade
     incremental: false
     self-contained: true
 ---
+
+## Fractals {background-iframe="https://gateway.fxhash2.xyz/ipfs/QmNTkcctTHZzhLSngcJwxVJqeFsJcutAcuVcir4gchFdGf/?fxhash=onio37muQc6g5o5uzt8WwrRVAgTBdonBLj9bGAAnUVUNiygGj6U"}
+
+* With Quarto I can use webgl in my slide backgrounds!
+
+* I can link to my fxhash gentks on ipfs for loads of amazing animated backgrounds!
+
 
 
 ```{r echo=FALSE}
@@ -20,6 +31,9 @@ library(imager)
 l=seq(-2,2,l=1000)
 par(bg=hsv(0,0,0,0), mar=c(0,0,0,0))
 ```
+
+
+
 
 # 1. Hubris
 
@@ -33,13 +47,13 @@ This is an idea that'd been rumbling around in my mind for a while, but I didn't
 But working again in computational biology, the idea of evolving images towards some objective measure of beauty was appealing.
 
 
-OK - so we need a representation of an image.
-
 Note - I'm not talking about AI art or machine learning here.. what I'm dealing with is fashioned maths and programming.  I have no interest at all in black box mimicry, leaves me cold.  I need to see the entire process.
 
 So...a statistical programmer with no training at all is going to invent a system to define an image in maths, and then steer the maths towards something cool.
 
 Now, all this was going to rest on how you describe an image to a computer, and then how you manipulate this.
+
+OK - so we need a representation of an image.
 
 
 :::
@@ -69,8 +83,10 @@ $$
 
 ```{r echo=FALSE}
 #| code-line-numbers: 2
+#| fig-align: "center"
+par(mar=c(0,0,0,0), bg=hsv(0,0,0,0))
 outer(X=l,Y=l,\(X,Y) 
-      X^2+Y^2 > 1 
+      X^2+Y^2 > 1.5 
 ) |> as.cimg() |> plot(ax=F,as=1)
 ```
 
@@ -88,6 +104,8 @@ $$
 
 ```{r}
 #| code-line-numbers: 2
+#| fig-align: "center"
+par(mar=c(0,0,0,0), bg=hsv(0,0,0,0))
 outer(X=l,Y=l,\(X,Y) 
       pmax(Mod(X),Mod(Y)) > 1.5 
 ) |> as.cimg() |> plot(ax=F,as=1)
@@ -101,16 +119,25 @@ $$
 f(x,y)=(\sin(3x)^2+\cos(3y)^2)\ \text{Mod}\ 0.2 > 0.1
 $$
 
-
-```{r}
+```{r echo=TRUE, eval=FALSE}
 #| code-line-numbers: 2
+#| fig-align: "center"
 outer(X=l,Y=l,\(X,Y) 
       (sin(X*3)^2 + cos(Y*3)^2)%%0.2 > 0.1
 ) |> as.cimg() |> plot(ax=F,as=1)
 
 ```
 
----
+
+```{r echo=FALSE}
+#| code-line-numbers: 2
+#| fig-align: "center"
+par(mar=c(0,0,0,0), bg=hsv(0,0,0,0))
+outer(X=l,Y=l,\(X,Y) 
+      (sin(X*3)^2 + cos(Y*3)^2)%%0.2 > 0.1
+) |> as.cimg() |> plot(ax=F,as=1)
+
+```
 
 ```{r echo=F}
 plotfunctions <- function(h,s,v,X,Y){
@@ -124,9 +151,8 @@ plotfunctions <- function(h,s,v,X,Y){
     par(bg=hsv(0,0,0,0), mar=c(0,0,0,0))
   b |> plot(ax=F,as=1, rescale=F)
 }
-```
 
-```{r echo=F}
+
 plotfunctionsC <- function(h,s,v,X,Y){
     a <- array(dim=c(length(X),length(Y),3))
   a[,,1] <- 360*(Mod(outer(X,Y,\(X,Y) h(X+1i*Y)))%%1)
@@ -145,50 +171,188 @@ plotfunctionsC <- function(h,s,v,X,Y){
 --- 
 
 ```{r echo=T}
+#| fig-align: "center"
 plotfunctions(
   h=\(X,Y) X/2,
   s=\(X,Y) sin(3*X)+cos(3*Y),
   v=\(X,Y) cos(3*X)+sin(3*Y),
-  l,l
-  )
+  l,l  )
 ```
 
 --- 
 
 ```{r echo=T}
+#| fig-align: "center"
 plotfunctions(
   h=\(X,Y) X/2,
   s=\(X,Y) sin(3*X)+cos(3*Y)+.1*rnorm(length(X)),
   v=\(X,Y) cos(3*X)+sin(3*Y)+.1*rnorm(length(X)),
-  l,l
-  )
+  l,l  )
 ```
 
 --- 
 
 ```{r echo=T}
+#| fig-align: "center"
 plotfunctionsC(
   h=\(Z) Arg(atan(Z)),
   s=\(Z) Mod(atan(Z)),
   v=\(Z) Arg(Z*10)+Mod(Z),
-  l,l
-  )
+  l,l)
 ```
 
 --- 
 
-# What makes an image good?
+```{r echo=T}
+#| fig-align: "center"
+plotfunctionsC(
+  h=\(Z) Arg(atan(Z)),
+  s=\(Z) Mod(atan(Z)),
+  v=\(Z) Mod(Z^0),
+  l,l)
 
+```
 
+# Chaos
+
+--- 
+
+![](pic/ezgif.com-gif-maker(1).gif){fig-align="center"}
 
 # 2. Humility
+
+## Domain colouring
 
 What I'd done is reinvent domain colouring. 
 
 This is a mathematical technique that represents simple functions, but uses colours to represent values.  It's typically applied as a visualisation tool, people don't seem to have thought about it much from a purely aesthetic point of view.
 
+---
+
+![](pic/history185.png){fig-align="center"}
+
+---
+
+![](pic/history181.png){fig-align="center"}
+
+--- 
+
+![](pic/sunrise.png){fig-align="center"}
+
+---
+
+![](pic/history25121932.png){fig-align="center"}
+
+--- 
+
+![](pic/history161.png){fig-align="center"}
+
+
+--- 
+
+![](pic/Radialv1_130.png){fig-align="center"}
+
+# Community
+
+## genartclub
+
+Scientists / Artists / Coders / Mathematicians / Demoscene / Designers / Makers / Curators
+
+Instagram! #generative 
+
+Plotters, genuary, etc!
+
+*Rule based art is a thing!*
+
+## Why do this?
 
 # 3. History
+
+## Harmonographs
+
+![](pic/small-newton.jpg)
+
+![](pic/antique-harmo-3.webp)
+
+<https://www.youtube.com/watch?v=Anl9R1MQlS0>
+
+## Mystery curves
+
+![](pic/FarrisWBook-1-360x480.jpg)
+
+![](pic/MysteryCurve_v1.jpg)
+
+```{r echo=TRUE}
+#| animation.hook: gifski
+#| interval: 0.033333
+amp=0.5;freq=5;phase=1
+t = seq(0, 4, l=1000)
+for(j in seq(1,1000,10)){
+      z = 1i^t +                        # Our original circle
+          amp*(1i^(freq*t + phase))     # A new cirlce
+      plot(z, axes=FALSE, ann=FALSE, type="l", lwd=2, asp=1)
+      lines(c(0,(1i^t)[j],z[j]),lwd=3,col="red") # add lines
+      points(c(0,(1i^t)[j],z[j]),cex=2,pch=20)  } # add points
+```
+
+--- 
+
+```{r eval=TRUE, echo=FALSE}
+circle <- function(amp, freq, phase) amp*1i^(freq*seq(0,4,l=1000)+phase)
+z = circle(1,1,0) + circle(0.5,5,0) + circle(0.6,9,1)
+plot(z, axes=FALSE, ann=FALSE, type="l", lwd=2, asp=1)
+```
+
+--- 
+
+```{r , animation.hook='gifski',interval=1/30, echo=FALSE}
+circle <- function(amp, freq, phase) amp*1i^(freq*seq(0,4,l=1000)+phase)
+for(j in seq(1,1000,2)){
+      z = circle(1,1,0) + circle(0.5,5,0) + circle(0.6,9,1)
+      plot(z, axes=FALSE, ann=FALSE, type="l", lwd=2, asp=1)
+      lps = cumsum(c(0,circle(1,1,0)[j],circle(0.5,5,0)[j],circle(0.6,9,1)[j]))
+      lines(lps,lwd=3,col="red")
+      points(lps,cex=2,pch=20)
+      }
+```
+
+--- 
+
+```{r, animation.hook='gifski', interval=1/30, echo=FALSE}
+circle <- function(amp, freq, phase) amp*1i^(freq*seq(0,4,l=1000)+phase)
+for(j in seq(1,1000,2)){
+      z = circle(1,1,0) + circle(0.5,5,0) + circle(0.6,-7,1)
+      plot(z, axes=FALSE, ann=FALSE, type="l", lwd=2, asp=1)
+      
+      lps = cumsum(c(0,circle(1,1,0)[j],circle(0.5,5,0)[j],circle(0.6,-7,1)[j]))
+      lines(lps,lwd=3,col="red")
+      points(lps,cex=2,pch=20)
+}
+```
+
+---
+
+![](pic/outmpgd.mp4)
+
+--- 
+
+```{r , animation.hook='gifski', interval=1/30, echo=FALSE}
+circle <- function(amp, freq, phase) amp*1i^(freq*seq(0,4,l=1000)+phase)
+limits=c(-1,1)*2
+for( j in seq(0,4,l=100)[-1]){
+      z = circle(1,1,0) + circle(0.5,5,0) + circle(0.6,-7,j)
+      
+      plot(z, xlim=limits, ylim=limits,
+           axes=FALSE, ann=FALSE, type="l", 
+           lwd=2, asp=1, mar=c(0,0,0,0))
+      }
+```
+
+# Mystery Rose
+
+![](pic/mystery2.gif){fig-align: centre}
+
+
 
 # 4. Chaos
 
