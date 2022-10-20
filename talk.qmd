@@ -1,7 +1,8 @@
 ---
-title: "Attractors"
+title: "(Strange) Attractors"
 title-slide-attributes: 
   data-background-iframe: "https://gateway.fxhash2.xyz/ipfs/QmRw93LKHy8VezSjgQj1L92n6sJMvnCt2t2wtxSVu3roue/?fxhash=oohu8WTUHc37BaLufAqaQi7JWByxwSSXK5aJzv4nKeXHSNEHQft"
+  
 author: "George Savva"
 execute:
   cache: true
@@ -18,13 +19,6 @@ format:
     self-contained: true
 ---
 
-## Fractals {background-iframe="https://gateway.fxhash2.xyz/ipfs/QmNTkcctTHZzhLSngcJwxVJqeFsJcutAcuVcir4gchFdGf/?fxhash=onio37muQc6g5o5uzt8WwrRVAgTBdonBLj9bGAAnUVUNiygGj6U"}
-
-* With Quarto I can use webgl in my slide backgrounds!
-
-* I can link to my fxhash gentks on ipfs for loads of amazing animated backgrounds!
-
-
 
 ```{r echo=FALSE}
 library(imager)
@@ -32,7 +26,9 @@ l=seq(-2,2,l=1000)
 par(bg=hsv(0,0,0,0), mar=c(0,0,0,0))
 ```
 
+--- 
 
+![](pic/cleverness.PNG){width=100%}
 
 
 # 1. Hubris
@@ -46,7 +42,6 @@ This is an idea that'd been rumbling around in my mind for a while, but I didn't
 
 But working again in computational biology, the idea of evolving images towards some objective measure of beauty was appealing.
 
-
 Note - I'm not talking about AI art or machine learning here.. what I'm dealing with is fashioned maths and programming.  I have no interest at all in black box mimicry, leaves me cold.  I need to see the entire process.
 
 So...a statistical programmer with no training at all is going to invent a system to define an image in maths, and then steer the maths towards something cool.
@@ -58,19 +53,66 @@ OK - so we need a representation of an image.
 
 :::
 
-## What is an image?
+## What is an image? (to a mathematician?)
 
-An image is defined by its colour at every point.  
+* An image is defined by its colour at every location.  
 
-So any mapping of locations to colours defines an image!
+```{r echo=FALSE}
 
-Locations are two dimensional, colours are three dimensional
+```
 
-So any function:
+* Locations are two dimensional numbers (x,y)
+* Colours are three dimensional numbers (eg (Red, Green, Blue))
+
+$$
+\left(\begin{array}\\
+1&2\\
+1&3\\
+..&..\\
+m& n\end{array}\right)\rightarrow
+\left(\begin{array}\\
+0&0&0\\
+0&1&0\\
+..&..\\
+1&1&0\end{array}\right)
+$$
+
+
+--- 
+
+
+So *any* function:
 
 $$f: \mathbb{R}^2 \rightarrow \mathbb{R}^3$$
 
 defines an image, and every image is such a function.
+
+---  
+
+$$
+f(x,y)=x
+$$
+
+. . .
+
+```{r echo=TRUE, eval=FALSE}
+#| code-line-numbers: 3
+#| fig-align: "center"
+outer(X=l,Y=l,\(X,Y) 
+      X
+) |> as.cimg() |> plot(ax=F,as=1)
+```
+
+. . .
+
+```{r echo=FALSE, eval=TRUE}
+#| code-line-numbers: 2
+#| fig-align: "center"
+par(mar=c(0,0,0,0), bg=hsv(0,0,0,0))
+outer(X=l,Y=l,\(X,Y) 
+      X
+) |> as.cimg() |> plot(ax=F,as=1)
+```
 
 ---  
 
@@ -80,6 +122,7 @@ f(x,y)=\left\{\begin{array}{ll}
 1 & \text{otherwise}
 \end{array}\right.
 $$
+. . .
 
 ```{r echo=FALSE}
 #| code-line-numbers: 2
@@ -92,8 +135,6 @@ outer(X=l,Y=l,\(X,Y)
 
 ---  
 
-For a fake Malevich:  
-
 $$
 \text{f(x,y)}=\left\{\begin{array}{ll}
 0 & \text{if}\quad \max(|x|, |y|)<1.5\\
@@ -101,6 +142,7 @@ $$
 \end{array}\right.
 $$
 
+. . . 
 
 ```{r}
 #| code-line-numbers: 2
@@ -119,6 +161,8 @@ $$
 f(x,y)=(\sin(3x)^2+\cos(3y)^2)\ \text{Mod}\ 0.2 > 0.1
 $$
 
+. . . 
+
 ```{r echo=TRUE, eval=FALSE}
 #| code-line-numbers: 2
 #| fig-align: "center"
@@ -128,6 +172,7 @@ outer(X=l,Y=l,\(X,Y)
 
 ```
 
+. . . 
 
 ```{r echo=FALSE}
 #| code-line-numbers: 2
@@ -213,19 +258,12 @@ plotfunctionsC(
 
 ```
 
-# Chaos
+---
 
---- 
+# What makes an image good?
 
-![](pic/ezgif.com-gif-maker(1).gif){fig-align="center"}
+. . . 
 
-# 2. Humility
-
-## Domain colouring
-
-What I'd done is reinvent domain colouring. 
-
-This is a mathematical technique that represents simple functions, but uses colours to represent values.  It's typically applied as a visualisation tool, people don't seem to have thought about it much from a purely aesthetic point of view.
 
 ---
 
@@ -252,9 +290,17 @@ This is a mathematical technique that represents simple functions, but uses colo
 
 ![](pic/Radialv1_130.png){fig-align="center"}
 
+# 2. Humility
+
+## Domain colouring
+
+What I'd done is reinvent domain colouring. 
+
+This is a mathematical technique that represents simple functions, but uses colours to represent values.  It's typically applied as a visualisation tool, people don't seem to have thought about it much from a purely aesthetic point of view.
+
 # Community
 
-## genartclub
+## genartclub!
 
 Scientists / Artists / Coders / Mathematicians / Demoscene / Designers / Makers / Curators
 
@@ -269,27 +315,36 @@ Plotters, genuary, etc!
 # 3. History
 
 ## Harmonographs
+::: {layout-ncol=2}
+![](pic/small-newton.jpg){height=80%}
 
-![](pic/small-newton.jpg)
-
-![](pic/antique-harmo-3.webp)
+![](pic/antique-harmo-3.webp){height=80%}
+:::
 
 <https://www.youtube.com/watch?v=Anl9R1MQlS0>
 
 ## Mystery curves
 
-![](pic/FarrisWBook-1-360x480.jpg)
+::: {layout-ncol=2}
+
+
+![](pic/FarrisWBook-1-360x480.jpg){height=80%}
 
 ![](pic/MysteryCurve_v1.jpg)
+
+:::
+
+--- 
 
 ```{r echo=TRUE}
 #| animation.hook: gifski
 #| interval: 0.033333
 amp=0.5;freq=5;phase=1
-t = seq(0, 4, l=1000)
+t = seq(0, 4, l=100)
 for(j in seq(1,1000,10)){
       z = 1i^t +                        # Our original circle
           amp*(1i^(freq*t + phase))     # A new cirlce
+      par(mar=0.2*c(1,1,1,1))
       plot(z, axes=FALSE, ann=FALSE, type="l", lwd=2, asp=1)
       lines(c(0,(1i^t)[j],z[j]),lwd=3,col="red") # add lines
       points(c(0,(1i^t)[j],z[j]),cex=2,pch=20)  } # add points
@@ -307,8 +362,9 @@ plot(z, axes=FALSE, ann=FALSE, type="l", lwd=2, asp=1)
 
 ```{r , animation.hook='gifski',interval=1/30, echo=FALSE}
 circle <- function(amp, freq, phase) amp*1i^(freq*seq(0,4,l=1000)+phase)
-for(j in seq(1,1000,2)){
+for(j in seq(1,100,2)){
       z = circle(1,1,0) + circle(0.5,5,0) + circle(0.6,9,1)
+      par(mar=0.2*c(1,1,1,1))
       plot(z, axes=FALSE, ann=FALSE, type="l", lwd=2, asp=1)
       lps = cumsum(c(0,circle(1,1,0)[j],circle(0.5,5,0)[j],circle(0.6,9,1)[j]))
       lines(lps,lwd=3,col="red")
@@ -320,8 +376,9 @@ for(j in seq(1,1000,2)){
 
 ```{r, animation.hook='gifski', interval=1/30, echo=FALSE}
 circle <- function(amp, freq, phase) amp*1i^(freq*seq(0,4,l=1000)+phase)
-for(j in seq(1,1000,2)){
+for(j in seq(1,100,2)){
       z = circle(1,1,0) + circle(0.5,5,0) + circle(0.6,-7,1)
+      par(mar=.2*c(1,1,1,1))
       plot(z, axes=FALSE, ann=FALSE, type="l", lwd=2, asp=1)
       
       lps = cumsum(c(0,circle(1,1,0)[j],circle(0.5,5,0)[j],circle(0.6,-7,1)[j]))
@@ -352,8 +409,84 @@ for( j in seq(0,4,l=100)[-1]){
 
 ![](pic/mystery2.gif){fig-align: centre}
 
+## What and why? {background-iframe="https://gateway.fxhash2.xyz/ipfs/QmU41GC5mPNuNSJiNzUDzpUZg8gQM6wr8g3frc7R3ksn3d/?fxhash=opP94SWuryawNgurgxqNe834baeqthtrzmUKsSD7o3syR9uFZfW"}
 
 
-# 4. Chaos
 
-# 5. Victorian
+# History 2: Chaos
+
+So far:
+
+Simple input $\arrow$ Simple output
+
+Complex input $\arrow$ Complex output
+
+And this was how we thought the world worked until about 60 years ago!
+
+but...
+
+
+## Julia set
+
+Consider $z_{n+1}=z_n^2 + c$
+
+The Julia set for $c$ is all the points where repeated iterations do not go to infinity.
+
+What does it look like?
+
+## Another famous shape..
+
+Consider $z_{n+1}=z_n^2 + c$
+
+For which values of $c$ does the sequence starting from $z_0=0$ tend to infinity?
+
+What does it look like?
+
+. . . 
+
+![](pic/Mandel.png)
+
+## Mandlebrot Set
+
+## Fractals
+
+Complex outputs from incredibly simple equations
+
+Blind watchmaker
+
+## Biomorphs
+
+
+
+--- 
+
+# Chaotic Attractors
+
+A dynamical system that attracts!
+
+# Lorentz attractor
+
+$$
+\begin{align}\\
+x'&=10\times(y-x)\\
+y'&=28x-zx-y\\
+z'&=xy-8z/3
+\end{align}
+$$
+
+![](pic/iter5.mp4){fig-align="center"}
+
+# Discrete attractors
+
+* A series of points, the location of each point defined by the previous one: 
+
+xn+1 = sin(a yn) + c cos(a xn)
+yn+1 = sin(b xn) + d cos(b yn)
+
+# Clifford attractor
+
+![](pic/ezgif.com-gif-maker(1).gif){fig-align="center"}
+
+--- 
+
+
