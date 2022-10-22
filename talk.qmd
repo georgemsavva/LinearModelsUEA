@@ -14,10 +14,15 @@ format:
     scrollable: false
     fig-align: center
     echo: true
-    transition: fade
-    incremental: false
-    self-contained: true
+    #transition: fade
+    #incremental: false
+    self-contained: false
 ---
+
+
+## {.center}
+
+![](pic/cleverness.PNG){.center width=100%}
 
 
 ```{r echo=FALSE}
@@ -26,17 +31,18 @@ l=seq(-2,2,l=1000)
 par(bg=hsv(0,0,0,0), mar=c(0,0,0,0))
 ```
 
---- 
-
-![](pic/cleverness.PNG){width=100%}
-
-
 # 1. Hubris
 
 ::: {.notes}
 I started making art with the idea that computers ought to be better at making it than people
 
-I had the idea that, after all, an image is just a set of pixels, and there's no reason why you couldn't searh through the possible arrangements of these pixels, optimising for some criterion 
+So computer art was something I'd dabbled with on and off since college, but in 2017 I started working at  Quadram Institute Bioscience, there were a few things came together at that time..
+
+I was working on evolutionary biology, and there is something fascinating about the way in which organisms work and are defined by simple DNA codes...  then in my own role as statistician we are thinking more and more about machine learning and artificial intelligence, and at the same time I was seeing a lot of beautiful data visualisation..
+
+So we have the evolutionary process, the computer that can make pictures, and an interest in mathematics and abstract art..
+
+I had the idea that, after all, an image is just a set of pixels, and there's no reason why you couldn't search through the possible arrangements of these pixels, optimising for some criterion. 
 
 This is an idea that'd been rumbling around in my mind for a while, but I didn't have the computing tools necessary to do this until about 2019... I'd picked up the idea and played with it for a while back in the 00s when I was a student but a career in proper statistics distracted me...
 
@@ -53,13 +59,9 @@ OK - so we need a representation of an image.
 
 :::
 
-## What is an image? (to a mathematician?)
+## What is an image? (to a mathematician?) {.small}
 
 * An image is defined by its colour at every location.  
-
-```{r echo=FALSE}
-
-```
 
 * Locations are two dimensional numbers (x,y)
 * Colours are three dimensional numbers (eg (Red, Green, Blue))
@@ -95,24 +97,35 @@ $$
 
 . . .
 
+::::{.columns}
+
+:::{.column width="40%"}
+col1
 ```{r echo=TRUE, eval=FALSE}
-#| code-line-numbers: 3
+#| code-line-numbers: 2
 #| fig-align: "center"
 outer(X=l,Y=l,\(X,Y) 
       X
 ) |> as.cimg() |> plot(ax=F,as=1)
 ```
+:::
 
 . . .
 
+:::{.column width="40%"}
+col2
 ```{r echo=FALSE, eval=TRUE}
 #| code-line-numbers: 2
 #| fig-align: "center"
 par(mar=c(0,0,0,0), bg=hsv(0,0,0,0))
 outer(X=l,Y=l,\(X,Y) 
-      X
+      Y+X
 ) |> as.cimg() |> plot(ax=F,as=1)
 ```
+
+:::
+
+::::
 
 ---  
 
@@ -122,6 +135,7 @@ f(x,y)=\left\{\begin{array}{ll}
 1 & \text{otherwise}
 \end{array}\right.
 $$
+
 . . .
 
 ```{r echo=FALSE}
@@ -144,8 +158,8 @@ $$
 
 . . . 
 
-```{r}
-#| code-line-numbers: 2
+```{r echo=FALSE}
+#| code-line-numbers: 3
 #| fig-align: "center"
 par(mar=c(0,0,0,0), bg=hsv(0,0,0,0))
 outer(X=l,Y=l,\(X,Y) 
@@ -154,6 +168,11 @@ outer(X=l,Y=l,\(X,Y)
 
 ```
 
+
+
+---
+
+![](pic/blacksquare.jpg)
 
 ---
 
@@ -183,6 +202,29 @@ outer(X=l,Y=l,\(X,Y)
 ) |> as.cimg() |> plot(ax=F,as=1)
 
 ```
+
+--- 
+
+```{r echo=TRUE, eval=FALSE}
+#| code-line-numbers: 2
+#| fig-align: "center"
+outer(X=l,Y=l,\(X,Y) 
+      ((((1+abs(2*X-1))*X)%%1)>.5)==(((1.5*Y)%%1)>.5)
+) |> as.cimg() |> plot(ax=F,as=1)
+
+```
+
+```{r echo=FALSE, eval=TRUE}
+#| code-line-numbers: 2
+#| fig-align: "center"
+par(mar=c(0,0,0,0), bg=hsv(0,0,0,0))
+outer(X=l,Y=l,\(X,Y) 
+      ((((1+abs(2*X-1))*X)%%1)>.5)==(((1.5*Y)%%1)>.5)
+) |> as.cimg() |> plot(ax=F,as=1)
+
+```
+
+--- 
 
 ```{r echo=F}
 plotfunctions <- function(h,s,v,X,Y){
@@ -294,23 +336,26 @@ plotfunctionsC(
 
 ## Domain colouring
 
-What I'd done is reinvent domain colouring. 
+I had reinvented *domain colouring*. 
 
 This is a mathematical technique that represents simple functions, but uses colours to represent values.  It's typically applied as a visualisation tool, people don't seem to have thought about it much from a purely aesthetic point of view.
 
-# Community
+![](pic/Complex-plot.png)
+(Author: Nschloe; https://commons.wikimedia.org/wiki/File:Complex-plot.png)
 
-## genartclub!
+# Online community
 
-Scientists / Artists / Coders / Mathematicians / Demoscene / Designers / Makers / Curators
+Scientists / Artists / Coders / Mathematicians / Designers / Makers / Curators
 
-Instagram! #generative 
+Instagram / Twitter 
 
-Plotters, genuary, etc!
+#generative 
+
+#genuary
 
 *Rule based art is a thing!*
 
-## Why do this?
+# Why do we do this?
 
 # 3. History
 
@@ -326,7 +371,6 @@ Plotters, genuary, etc!
 ## Mystery curves
 
 ::: {layout-ncol=2}
-
 
 ![](pic/FarrisWBook-1-360x480.jpg){height=80%}
 
@@ -405,9 +449,13 @@ for( j in seq(0,4,l=100)[-1]){
       }
 ```
 
-# Mystery Rose
+## Mystery Rose
 
 ![](pic/mystery2.gif){fig-align: centre}
+
+## Atom
+
+![](pic/atom.gif)
 
 ## What and why? {background-iframe="https://gateway.fxhash2.xyz/ipfs/QmU41GC5mPNuNSJiNzUDzpUZg8gQM6wr8g3frc7R3ksn3d/?fxhash=opP94SWuryawNgurgxqNe834baeqthtrzmUKsSD7o3syR9uFZfW"}
 
@@ -432,11 +480,14 @@ Consider $z_{n+1}=z_n^2 + c$
 
 The Julia set for $c$ is all the points where repeated iterations do not go to infinity.
 
-What does it look like?
-
 ## Another famous shape..
 
-Consider $z_{n+1}=z_n^2 + c$
+
+Consider: 
+$$\begin{align}
+z_0=0\\
+z_{n+1}=z_n^2 + c
+\end{align}$$
 
 For which values of $c$ does the sequence starting from $z_0=0$ tend to infinity?
 
@@ -478,15 +529,81 @@ $$
 
 # Discrete attractors
 
-* A series of points, the location of each point defined by the previous one: 
+* A series of points, the location of each point defined only by the previous one:
 
-xn+1 = sin(a yn) + c cos(a xn)
-yn+1 = sin(b xn) + d cos(b yn)
+* Clifford attractor:
+
+  - Start from a random position.
+  - Pick $a$, $b$, $c$, $d$
+  - Then iterate:
+
+$$\begin{align}
+x_{n+1} &=\sin(ay_n) + c\cos(ax_n)\\
+y_{n+1} &=\sin(bx_n) + d\cos(by_n)\end{align}
+$$
+
+
+---
 
 # Clifford attractor
 
-![](pic/ezgif.com-gif-maker(1).gif){fig-align="center"}
+![](pic/ezgif.com-gif-maker(2).gif){fig-align="center"}
+
+
+---
+
+# Clifford attractor
+
+![](pic/globe2.png){fig-align="center"}
+
+---
+
+![](pic/attractor00478.png)
 
 --- 
+
+![](pic/attractor01340.png)
+
+--- 
+
+![](pic/attractor00685.png)
+
+--- 
+
+![](pic/attractor00804.png)
+
+---
+
+# Extending the attractor system
+
+Changing the attractor equations
+
+--- 
+
+Clifford attractor:
+
+$$\begin{align}
+x_{n+1} &=\sin(ay_n) + c\cos(ax_n)\\
+y_{n+1} &=\sin(bx_n) + d\cos(by_n)\end{align}
+$$
+
+
+```{r }
+par(mar=2*c(1,1,1,1),mfrow=c(3,1),bg="black",fg="white")
+x=seq(-10,10,.001)
+plot(x, sin(x), axes=F,ann=F,type="l")
+plot(x, ifelse((x%%(2*pi))<pi,x%%pi, pi-x%%pi), axes=F,ann=F,type="l")
+plot(x, x%%(pi), axes=F,ann=F,type="l")
+```
+
+---
+
+![](pic/shardpink.png)    
+
+
+---
+
+
+![](pic/electricBlue.png)
 
 
